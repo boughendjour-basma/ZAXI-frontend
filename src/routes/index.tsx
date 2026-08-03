@@ -17,8 +17,6 @@ const PhoneVerificationPage = lazy(() => import('@/pages/PhoneVerificationPage')
 const OTPVerificationPage = lazy(() => import('@/pages/OTPVerificationPage'));
 const CreateAccountPage = lazy(() => import('@/pages/CreateAccountPage'));
 
-const DriverLoginPage = lazy(() => import('@/pages/DriverLoginPage'));
-
 // Customer Pages
 const CustomerHomePage = lazy(() => import('@/pages/customer/HomePage'));
 const CustomerHistoryPage = lazy(() => import('@/pages/customer/HistoryPage'));
@@ -46,12 +44,12 @@ export function AppRoutes() {
         {/* Guest Routes (Unauthenticated flow) */}
         <Route element={<GuestRoute />}>
           <Route path="/welcome" element={<WelcomePage />} />
+          {/* Unified login for all users — backend determines role */}
           <Route path="/login" element={<LoginPage />} />
+          {/* Customer registration: phone → OTP → name */}
           <Route path="/verify-phone" element={<PhoneVerificationPage />} />
           <Route path="/verify-otp" element={<OTPVerificationPage />} />
           <Route path="/create-account" element={<CreateAccountPage />} />
-
-          <Route path="/driver/login" element={<DriverLoginPage />} />
         </Route>
 
         {/* Protected Customer Routes */}

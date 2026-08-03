@@ -6,32 +6,39 @@ import type {
   VerifyCodeResponse,
   RegisterRequest,
   RegisterResponse,
-  LoginRequest,
+  LoginRequestCodeRequest,
+  LoginVerifyRequest,
   LoginResponse,
   CurrentUserResponse,
 } from '@/types/auth.types';
 import type { ApiResponse } from '@/types/api.types';
 
 export const AuthService = {
-  // ─── Sign-Up Flow ──────────────────────────────────────────────────────────
+  // ─── Registration OTP Flow (new customers only) ────────────────────────────
 
-  /** Step 1: Send OTP to phone number */
+  /** Step 1: Send registration OTP to phone */
   requestCode: (data: RequestCodeRequest) =>
     apiClient.post<ApiResponse<RequestCodeResponse>>('/auth/request-code', data),
 
-  /** Step 2: Verify OTP — returns { isNewUser, verificationToken } */
+  /** Step 2: Verify registration OTP — returns { isNewUser, verificationToken } */
   verifyCode: (data: VerifyCodeRequest) =>
     apiClient.post<ApiResponse<VerifyCodeResponse>>('/auth/verify-code', data),
 
-  /** Step 3: Register customer with name + verificationToken (Passwordless) */
+  /** Step 3: Create customer account with name + verificationToken */
   register: (data: RegisterRequest) =>
     apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
-  // ─── Login / Session ───────────────────────────────────────────────────────
+  // ─── Login OTP Flow (all users: customers + driver) ────────────────────────
 
-  /** Customer login: phone only. Driver login: phone + password */
-  login: (data: LoginRequest) =>
-    apiClient.post<ApiResponse<LoginResponse>>('/auth/login', data),
+  /** Step 1: Request a login OTP for any registered phone */
+  loginRequestCode: (data: LoginRequestCodeRequest) =>
+    apiClient.post<ApiResponse<{ message: string }>>('/auth/login/request-code', data),
+
+  /** Step 2: Verify login OTP — returns JWT + user (role determined by backend) */
+  loginVerify: (data: LoginVerifyRequest) =>
+    apiClient.post<ApiResponse<LoginResponse>>('/auth/login/verify', data),
+
+  // ─── Session ───────────────────────────────────────────────────────────────
 
   /** Get current authenticated user */
   getCurrentUser: () =>

@@ -1,12 +1,10 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { AuthService } from '@/services/auth.service';
 import { queryClient } from '@/lib/queryClient';
 import { disconnectSocket } from '@/lib/socket';
-import type { LoginRequest } from '@/types/auth.types';
 
 export function useAuth() {
   const { user, token, role, isAuthenticated, setAuth, clearAuth } = useAuthStore();
@@ -15,24 +13,21 @@ export function useAuth() {
   const isCustomer = role === 'CUSTOMER';
   const isDriver = role === 'DRIVER';
 
-  // ─── Login ─────────────────────────────────────────────────────────────────
+  // ─── Post-login redirect ────────────────────────────────────────────────────
+  // Called by LoginPage after loginVerify succeeds.
 
-  const loginMutation = useMutation({
-    mutationFn: (data: LoginRequest) => AuthService.login(data),
-    onSuccess: (response) => {
-      const { token: newToken, user: newUser } = response.data.data!;
-      setAuth(newToken, newUser);
-      toast.success(`Welcome back, ${newUser.name ?? newUser.phone}!`);
-      if (newUser.role === 'DRIVER') {
+  const redirectAfterLogin = useCallback(
+    (userRole: string, userName?: string | null, userPhone?: string) => {
+      const displayName = userName ?? userPhone ?? 'back';
+      toast.success(`Welcome back, ${displayName}!`);
+      if (userRole === 'DRIVER') {
         navigate('/driver/dashboard');
       } else {
         navigate('/');
       }
     },
-    onError: () => {
-      toast.error('Invalid phone number or password.');
-    },
-  });
+    [navigate]
+  );
 
   // ─── Logout ────────────────────────────────────────────────────────────────
 
@@ -56,10 +51,8 @@ export function useAuth() {
     isAuthenticated,
     isCustomer,
     isDriver,
-    login: loginMutation.mutate,
-    loginAsync: loginMutation.mutateAsync,
-    isLoggingIn: loginMutation.isPending,
-    loginError: loginMutation.error,
+    setAuth,
+    redirectAfterLogin,
     logout,
   };
 }

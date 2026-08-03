@@ -18,6 +18,7 @@ export interface AuthTokenPayload {
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
+// Registration OTP flow (new customers only)
 export interface RequestCodeRequest {
   phone: string;
 }
@@ -32,12 +33,15 @@ export interface RegisterRequest {
   name: string;
 }
 
-export interface LoginRequest {
+// Login OTP flow (all users: customers + driver)
+export interface LoginRequestCodeRequest {
   phone: string;
-  password?: string;
 }
 
-
+export interface LoginVerifyRequest {
+  phone: string;
+  code: string;
+}
 
 // ─── Response DTOs ────────────────────────────────────────────────────────────
 
