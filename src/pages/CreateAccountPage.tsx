@@ -5,23 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { User, Lock, UserPlus } from 'lucide-react';
+import { User, UserPlus } from 'lucide-react';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 
-const registerSchema = z
-  .object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
+const registerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+});
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -32,14 +25,14 @@ export default function CreateAccountPage() {
 
   const state = location.state as { phone?: string; otpToken?: string } | null;
   const phone = state?.phone ?? '';
-  const otpToken = state?.otpToken ?? '';
+  const verificationToken = state?.otpToken ?? '';
 
   useEffect(() => {
-    if (!phone || !otpToken) {
+    if (!phone || !verificationToken) {
       toast.error('Session expired. Please restart registration.');
       navigate('/verify-phone', { replace: true });
     }
-  }, [phone, otpToken, navigate]);
+  }, [phone, verificationToken, navigate]);
 
   const {
     register,
@@ -50,12 +43,10 @@ export default function CreateAccountPage() {
   });
 
   const registerMutation = useMutation({
-    mutationFn: (data: { name: string; password: string }) =>
+    mutationFn: (data: { name: string }) =>
       AuthService.register({
-        phone,
         name: data.name,
-        password: data.password,
-        otpToken,
+        verificationToken,
       }),
     onSuccess: (res) => {
       const { token, user } = res.data.data!;
@@ -70,7 +61,7 @@ export default function CreateAccountPage() {
   });
 
   const onSubmit = (data: RegisterFormValues) => {
-    registerMutation.mutate({ name: data.name, password: data.password });
+    registerMutation.mutate({ name: data.name });
   };
 
   return (
@@ -81,7 +72,7 @@ export default function CreateAccountPage() {
         </div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Account</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Complete your details for phone <span className="font-bold text-slate-700 dark:text-slate-300">+213 {phone}</span>
+          Enter your name for phone <span className="font-bold text-slate-700 dark:text-slate-300">+213 {phone}</span>
         </p>
       </div>
 
@@ -93,26 +84,6 @@ export default function CreateAccountPage() {
           error={errors.name?.message}
           disabled={registerMutation.isPending}
           {...register('name')}
-        />
-
-        <Input
-          label="Password"
-          type="password"
-          placeholder="••••••••"
-          leftIcon={<Lock className="h-4 w-4" />}
-          error={errors.password?.message}
-          disabled={registerMutation.isPending}
-          {...register('password')}
-        />
-
-        <Input
-          label="Confirm Password"
-          type="password"
-          placeholder="••••••••"
-          leftIcon={<Lock className="h-4 w-4" />}
-          error={errors.confirmPassword?.message}
-          disabled={registerMutation.isPending}
-          {...register('confirmPassword')}
         />
 
         <Button

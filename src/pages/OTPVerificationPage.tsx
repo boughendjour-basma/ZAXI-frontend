@@ -35,7 +35,7 @@ export default function OTPVerificationPage() {
     mutationFn: (code: string) => AuthService.verifyCode({ phone, code }),
     onSuccess: (res) => {
       toast.success('Code verified successfully!');
-      const otpToken = res.data.data?.otpToken ?? '';
+      const otpToken = res.data.data?.verificationToken ?? '';
       if (purpose === 'forgot-password') {
         navigate('/reset-password', { state: { phone, code: otp, otpToken } });
       } else {

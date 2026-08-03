@@ -2,10 +2,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
-import { Lock, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -15,7 +14,6 @@ const loginSchema = z.object({
     .min(9, 'Phone number must be at least 9 digits')
     .max(10, 'Phone number cannot exceed 10 digits')
     .regex(/^[0-9]+$/, 'Phone number must contain only numbers'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -32,14 +30,12 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       phone: '',
-      password: '',
     },
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    // Standardize phone format if user typed leading 0
     const normalizedPhone = data.phone.replace(/^0/, '');
-    login({ phone: normalizedPhone, password: data.password });
+    login({ phone: normalizedPhone });
   };
 
   return (
@@ -47,7 +43,7 @@ export default function LoginPage() {
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Customer Sign In</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Enter your phone and password to access your account
+          Enter your phone number to sign in (Passwordless)
         </p>
       </div>
 
@@ -61,25 +57,6 @@ export default function LoginPage() {
           onChange={(e) => setValue('phone', e.target.value)}
         />
 
-        <Input
-          label="Password"
-          type="password"
-          placeholder="••••••••"
-          leftIcon={<Lock className="h-4 w-4" />}
-          error={errors.password?.message}
-          disabled={isLoggingIn}
-          {...register('password')}
-        />
-
-        <div className="flex justify-end">
-          <Link
-            to="/forgot-password"
-            className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
         <Button
           type="submit"
           fullWidth
@@ -87,7 +64,7 @@ export default function LoginPage() {
           isLoading={isLoggingIn}
           leftIcon={<LogIn className="h-4 w-4" />}
         >
-          Sign In
+          Sign In with Phone
         </Button>
       </form>
 

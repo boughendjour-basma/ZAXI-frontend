@@ -22,17 +22,17 @@ export const AuthService = {
   requestCode: (data: RequestCodeRequest) =>
     apiClient.post<ApiResponse<RequestCodeResponse>>('/auth/request-code', data),
 
-  /** Step 2: Verify OTP — returns otpToken for registration */
+  /** Step 2: Verify OTP — returns { isNewUser, verificationToken } */
   verifyCode: (data: VerifyCodeRequest) =>
     apiClient.post<ApiResponse<VerifyCodeResponse>>('/auth/verify-code', data),
 
-  /** Step 3: Register with name + password + otpToken */
+  /** Step 3: Register customer with name + verificationToken (Passwordless) */
   register: (data: RegisterRequest) =>
     apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
   // ─── Login / Session ───────────────────────────────────────────────────────
 
-  /** Login with phone + password (customers and driver) */
+  /** Login (phone only for customer, phone + password for driver) */
   login: (data: LoginRequest) =>
     apiClient.post<ApiResponse<LoginResponse>>('/auth/login', data),
 
@@ -44,17 +44,17 @@ export const AuthService = {
   logout: () =>
     apiClient.post<ApiResponse<null>>('/auth/logout'),
 
-  /** Change password (authenticated) */
+  /** Change password (authenticated DRIVER only) */
   changePassword: (data: ChangePasswordRequest) =>
     apiClient.patch<ApiResponse<null>>('/auth/change-password', data),
 
-  // ─── Password Recovery ─────────────────────────────────────────────────────
+  // ─── Password Recovery (DRIVER only) ───────────────────────────────────────
 
-  /** Step 1: Send OTP for password reset */
+  /** Step 1: Send OTP for driver password reset */
   forgotPasswordRequestCode: (data: ForgotPasswordRequestCodeRequest) =>
     apiClient.post<ApiResponse<RequestCodeResponse>>('/auth/forgot-password/request-code', data),
 
-  /** Step 2: Reset password with OTP + new password */
+  /** Step 2: Reset password for driver */
   resetPassword: (data: ResetPasswordRequest) =>
     apiClient.post<ApiResponse<null>>('/auth/forgot-password/reset', data),
 };

@@ -28,15 +28,13 @@ export interface VerifyCodeRequest {
 }
 
 export interface RegisterRequest {
-  phone: string;
+  verificationToken: string;
   name: string;
-  password: string;
-  otpToken: string;
 }
 
 export interface LoginRequest {
   phone: string;
-  password: string;
+  password?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -66,8 +64,8 @@ export interface RequestCodeResponse {
 }
 
 export interface VerifyCodeResponse {
-  message: string;
-  otpToken: string;
+  isNewUser: boolean;
+  verificationToken?: string;
 }
 
 export interface RegisterResponse {
