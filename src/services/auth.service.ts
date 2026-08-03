@@ -8,9 +8,6 @@ import type {
   RegisterResponse,
   LoginRequest,
   LoginResponse,
-  ChangePasswordRequest,
-  ForgotPasswordRequestCodeRequest,
-  ResetPasswordRequest,
   CurrentUserResponse,
 } from '@/types/auth.types';
 import type { ApiResponse } from '@/types/api.types';
@@ -32,7 +29,7 @@ export const AuthService = {
 
   // ─── Login / Session ───────────────────────────────────────────────────────
 
-  /** Login (phone only for customer, phone + password for driver) */
+  /** Customer login: phone only. Driver login: phone + password */
   login: (data: LoginRequest) =>
     apiClient.post<ApiResponse<LoginResponse>>('/auth/login', data),
 
@@ -43,18 +40,4 @@ export const AuthService = {
   /** Logout — invalidates server session */
   logout: () =>
     apiClient.post<ApiResponse<null>>('/auth/logout'),
-
-  /** Change password (authenticated DRIVER only) */
-  changePassword: (data: ChangePasswordRequest) =>
-    apiClient.patch<ApiResponse<null>>('/auth/change-password', data),
-
-  // ─── Password Recovery (DRIVER only) ───────────────────────────────────────
-
-  /** Step 1: Send OTP for driver password reset */
-  forgotPasswordRequestCode: (data: ForgotPasswordRequestCodeRequest) =>
-    apiClient.post<ApiResponse<RequestCodeResponse>>('/auth/forgot-password/request-code', data),
-
-  /** Step 2: Reset password for driver */
-  resetPassword: (data: ResetPasswordRequest) =>
-    apiClient.post<ApiResponse<null>>('/auth/forgot-password/reset', data),
 };

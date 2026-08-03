@@ -11,10 +11,9 @@ import { AuthService } from '@/services/auth.service';
 export default function OTPVerificationPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as { phone?: string; purpose?: 'register' | 'forgot-password' } | null;
+  const state = location.state as { phone?: string } | null;
 
   const phone = state?.phone ?? '';
-  const purpose = state?.purpose ?? 'register';
 
   const [otp, setOtp] = useState('');
   const [countdown, setCountdown] = useState(60);
@@ -36,11 +35,7 @@ export default function OTPVerificationPage() {
     onSuccess: (res) => {
       toast.success('Code verified successfully!');
       const otpToken = res.data.data?.verificationToken ?? '';
-      if (purpose === 'forgot-password') {
-        navigate('/reset-password', { state: { phone, code: otp, otpToken } });
-      } else {
-        navigate('/create-account', { state: { phone, otpToken } });
-      }
+      navigate('/create-account', { state: { phone, otpToken } });
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || 'Invalid or expired OTP code.';
@@ -49,10 +44,7 @@ export default function OTPVerificationPage() {
   });
 
   const resendMutation = useMutation({
-    mutationFn: () =>
-      purpose === 'forgot-password'
-        ? AuthService.forgotPasswordRequestCode({ phone })
-        : AuthService.requestCode({ phone }),
+    mutationFn: () => AuthService.requestCode({ phone }),
     onSuccess: () => {
       toast.success('New code sent!');
       setCountdown(60);

@@ -16,8 +16,7 @@ const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const PhoneVerificationPage = lazy(() => import('@/pages/PhoneVerificationPage'));
 const OTPVerificationPage = lazy(() => import('@/pages/OTPVerificationPage'));
 const CreateAccountPage = lazy(() => import('@/pages/CreateAccountPage'));
-const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
+
 const DriverLoginPage = lazy(() => import('@/pages/DriverLoginPage'));
 
 // Customer Pages
@@ -51,8 +50,7 @@ export function AppRoutes() {
           <Route path="/verify-phone" element={<PhoneVerificationPage />} />
           <Route path="/verify-otp" element={<OTPVerificationPage />} />
           <Route path="/create-account" element={<CreateAccountPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
           <Route path="/driver/login" element={<DriverLoginPage />} />
         </Route>
 

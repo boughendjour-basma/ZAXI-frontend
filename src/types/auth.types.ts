@@ -37,20 +37,7 @@ export interface LoginRequest {
   password?: string;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
 
-export interface ForgotPasswordRequestCodeRequest {
-  phone: string;
-}
-
-export interface ResetPasswordRequest {
-  phone: string;
-  code: string;
-  newPassword: string;
-}
 
 // ─── Response DTOs ────────────────────────────────────────────────────────────
 
