@@ -1,16 +1,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { ArrowRight, Smartphone } from 'lucide-react';
-import { AuthLayout } from '@/layouts/AuthLayout';
-import { Button } from '@/components/ui/Button';
-import { PhoneInput } from '@/components/ui/PhoneInput';
 import { AuthService } from '@/services/auth.service';
+import logoUrl from '@/assets/logo.png';
 
-const phoneSchema = z.object({
+const registerFormSchema = z.object({
+  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   phone: z
     .string()
     .min(9, 'Phone number must be at least 9 digits')
@@ -18,7 +16,7 @@ const phoneSchema = z.object({
     .regex(/^[0-9]+$/, 'Phone number must contain only numbers'),
 });
 
-type PhoneFormValues = z.infer<typeof phoneSchema>;
+type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 export default function PhoneVerificationPage() {
   const navigate = useNavigate();
@@ -28,16 +26,23 @@ export default function PhoneVerificationPage() {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<PhoneFormValues>({
-    resolver: zodResolver(phoneSchema),
-    defaultValues: { phone: '' },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerFormSchema),
+    defaultValues: { name: '', phone: '' },
   });
 
   const requestCodeMutation = useMutation({
-    mutationFn: (phone: string) => AuthService.requestCode({ phone }),
-    onSuccess: (_, phone) => {
+    mutationFn: (variables: { phone: string; name: string }) =>
+      AuthService.requestCode({ phone: variables.phone }),
+    onSuccess: (_, variables) => {
       toast.success('Verification code sent!');
-      navigate('/verify-otp', { state: { phone, purpose: 'register' } });
+      navigate('/verify-otp', {
+        state: {
+          name: variables.name,
+          phone: variables.phone,
+          purpose: 'register',
+        },
+      });
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || 'Failed to send verification code.';
@@ -45,53 +50,78 @@ export default function PhoneVerificationPage() {
     },
   });
 
-  const onSubmit = (data: PhoneFormValues) => {
-    const normalizedPhone = data.phone.replace(/^0/, '');
-    requestCodeMutation.mutate(normalizedPhone);
+  const onSubmit = (data: RegisterFormValues) => {
+    // Send raw phone — backend normalizePhoneNumber() handles 0→+213 conversion
+    requestCodeMutation.mutate({ phone: data.phone, name: data.name });
   };
 
   return (
-    <AuthLayout>
-      <div className="text-center mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950 flex items-center justify-center text-teal-600 dark:text-teal-400 mx-auto mb-3">
-          <Smartphone className="h-6 w-6" />
-        </div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Verify Phone Number</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          We will send you a 6-digit verification code via SMS
+    <div className="min-h-screen flex flex-col justify-between bg-white max-w-md mx-auto relative overflow-hidden shadow-2xl">
+      {/* Top half with Logo */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 pt-16">
+        <img
+          src={logoUrl}
+          alt="ZAXI VTC"
+          className="w-52 h-auto object-contain mb-4"
+        />
+        <p className="text-slate-800 text-sm font-medium tracking-wide">
+          Votre chauffeur, à votre service
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <PhoneInput
-          label="Phone Number"
-          placeholder="555 12 34 56"
-          error={errors.phone?.message}
-          disabled={requestCodeMutation.isPending}
-          {...register('phone')}
-          onChange={(e) => setValue('phone', e.target.value)}
-        />
+      {/* Bottom Orange Card */}
+      <div className="bg-zaxi-orange rounded-t-[40px] px-8 pt-10 pb-12 shadow-2xl">
+        <h1 className="text-white text-3xl font-bold tracking-tight mb-8 text-left">
+          creer un compte
+        </h1>
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          isLoading={requestCodeMutation.isPending}
-          rightIcon={<ArrowRight className="h-4 w-4" />}
-        >
-          Send Code
-        </Button>
-      </form>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Name Input */}
+          <div className="flex flex-col gap-1 text-left">
+            <input
+              type="text"
+              placeholder="Entrez votre nom ..."
+              disabled={requestCodeMutation.isPending}
+              {...register('name')}
+              className="w-full bg-white text-slate-800 placeholder-slate-400 py-3.5 px-5 rounded-2xl border-0 focus:ring-2 focus:ring-black outline-none font-medium transition-all shadow-inner"
+            />
+            {errors.name && (
+              <span className="text-rose-200 text-xs font-semibold px-2">
+                {errors.name.message}
+              </span>
+            )}
+          </div>
 
-      <div className="mt-6 text-center text-xs text-slate-500">
-        Already have an account?{' '}
-        <Link
-          to="/login"
-          className="font-bold text-teal-600 hover:underline dark:text-teal-400"
-        >
-          Sign in
-        </Link>
+          {/* Phone Input */}
+          <div className="flex flex-col gap-1 text-left">
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Entrez votre numero de telephone ..."
+              disabled={requestCodeMutation.isPending}
+              {...register('phone')}
+              onChange={(e) => setValue('phone', e.target.value.replace(/\s+/g, ''))}
+              className="w-full bg-white text-slate-800 placeholder-slate-400 py-3.5 px-5 rounded-2xl border-0 focus:ring-2 focus:ring-black outline-none font-medium transition-all shadow-inner"
+            />
+            {errors.phone && (
+              <span className="text-rose-200 text-xs font-semibold px-2">
+                {errors.phone.message}
+              </span>
+            )}
+          </div>
+
+          {/* Button Entrer (Centered Pill) */}
+          <div className="pt-6 flex justify-center">
+            <button
+              type="submit"
+              disabled={requestCodeMutation.isPending}
+              className="bg-black text-white hover:bg-neutral-900 rounded-full py-3.5 px-16 font-bold text-sm tracking-widest transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {requestCodeMutation.isPending ? 'Envoi...' : 'Entrer'}
+            </button>
+          </div>
+        </form>
       </div>
-    </AuthLayout>
+    </div>
   );
 }
