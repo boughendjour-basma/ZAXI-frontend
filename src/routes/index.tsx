@@ -13,9 +13,9 @@ import { DriverDashboardLayout } from '@/layouts/DriverDashboardLayout';
 const SplashPage = lazy(() => import('@/pages/SplashPage'));
 const WelcomePage = lazy(() => import('@/pages/WelcomePage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const PhoneVerificationPage = lazy(() => import('@/pages/PhoneVerificationPage'));
-const OTPVerificationPage = lazy(() => import('@/pages/OTPVerificationPage'));
 const CreateAccountPage = lazy(() => import('@/pages/CreateAccountPage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 
 // Customer Pages
 const CustomerHomePage = lazy(() => import('@/pages/customer/HomePage'));
@@ -46,10 +46,10 @@ export function AppRoutes() {
           <Route path="/welcome" element={<WelcomePage />} />
           {/* Unified login for all users — backend determines role */}
           <Route path="/login" element={<LoginPage />} />
-          {/* Customer registration: phone → OTP → name */}
-          <Route path="/verify-phone" element={<PhoneVerificationPage />} />
-          <Route path="/verify-otp" element={<OTPVerificationPage />} />
           <Route path="/create-account" element={<CreateAccountPage />} />
+          {/* Password Recovery */}
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/* Protected Customer Routes */}
@@ -83,3 +83,4 @@ export function AppRoutes() {
     </Suspense>
   );
 }
+

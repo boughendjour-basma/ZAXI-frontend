@@ -16,7 +16,7 @@ export function Skeleton({ className, rounded = 'lg' }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'animate-pulse bg-slate-200 dark:bg-slate-800',
+        'animate-pulse bg-[#F5F5F5]',
         roundedMap[rounded],
         className,
       )}
@@ -26,7 +26,7 @@ export function Skeleton({ className, rounded = 'lg' }: SkeletonProps) {
 
 export function CardSkeleton() {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800">
+    <div className="bg-white rounded-3xl p-6 border border-[#FFE0A0]">
       <div className="flex items-center gap-3 mb-4">
         <Skeleton className="h-10 w-10" rounded="full" />
         <div className="flex-1 space-y-2">

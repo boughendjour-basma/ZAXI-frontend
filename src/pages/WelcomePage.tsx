@@ -13,7 +13,7 @@ export default function WelcomePage() {
           alt="ZAXI VTC"
           className="w-52 h-auto object-contain mb-4"
         />
-        <p className="text-slate-800 text-sm font-medium tracking-wide">
+        <p className="text-[#1A1A1A] text-sm font-medium tracking-wide">
           Votre chauffeur, à votre service
         </p>
       </div>
@@ -38,7 +38,7 @@ export default function WelcomePage() {
             se connecter
           </button>
           <button
-            onClick={() => navigate('/verify-phone')}
+            onClick={() => navigate('/create-account')}
             className="bg-white text-black hover:bg-neutral-50 rounded-full py-3.5 px-4 font-bold text-sm tracking-wide transition-all shadow-md active:scale-95 flex-1 cursor-pointer"
           >
             créer un compte

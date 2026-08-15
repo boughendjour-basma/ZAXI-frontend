@@ -1,64 +1,53 @@
-import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { AuthService } from '@/services/auth.service';
-import { useAuthStore } from '@/store/authStore';
-import { Eye, EyeOff, Lock, Phone } from 'lucide-react';
+import { Calendar, Phone } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
 
-const loginSchema = z.object({
+const schema = z.object({
   phone: z
     .string()
     .min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres')
     .max(15, 'Numéro invalide')
     .regex(/^[0-9+]+$/, 'Chiffres uniquement'),
-  password: z.string().min(1, 'Veuillez entrer votre mot de passe'),
+  dateOfBirth: z.string().min(1, 'La date de naissance est requise'),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type FormValues = z.infer<typeof schema>;
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { phone: '', password: '' },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { phone: '', dateOfBirth: '' },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: (data: LoginFormValues) => AuthService.login(data),
+  const verifyMutation = useMutation({
+    mutationFn: (data: FormValues) => AuthService.forgotPasswordVerify(data),
     onSuccess: (res) => {
-      const { token, user } = res.data.data!;
-      setAuth(token, user);
-      toast.success(`Bienvenue, ${user.name || 'Utilisateur'} !`);
-      if (user.role === 'DRIVER') {
-        navigate('/driver/dashboard', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      const { resetToken } = res.data.data!;
+      // Pass resetToken in router state (memory only — never localStorage)
+      navigate('/reset-password', { state: { resetToken }, replace: true });
     },
     onError: (err: any) => {
       const msg =
-        err.response?.data?.errors?.[0]?.message ||
         err.response?.data?.message ||
-        'Identifiants incorrects.';
+        'Numéro de téléphone ou date de naissance invalide.';
       toast.error(msg);
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    loginMutation.mutate(data);
-  };
+  const onSubmit = (data: FormValues) => verifyMutation.mutate(data);
 
   return (
     <div
@@ -83,15 +72,7 @@ export default function LoginPage() {
           paddingBottom: '16px',
         }}
       >
-        <img
-          src={logoUrl}
-          alt="ZAXI"
-          style={{
-            width: '200px',
-            height: 'auto',
-            objectFit: 'contain',
-          }}
-        />
+        <img src={logoUrl} alt="ZAXI" style={{ width: '200px', height: 'auto', objectFit: 'contain' }} />
       </div>
 
       {/* Orange Card */}
@@ -109,15 +90,18 @@ export default function LoginPage() {
             fontSize: '20px',
             fontWeight: 700,
             textAlign: 'center',
-            margin: '0 0 20px 0',
+            margin: '0 0 6px 0',
             letterSpacing: '0.3px',
           }}
         >
-          se connecter
+          Mot de passe oublié
         </h1>
+        <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', textAlign: 'center', margin: '0 0 20px 0' }}>
+          Vérifiez votre identité pour réinitialiser votre mot de passe
+        </p>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Phone input */}
+          {/* Phone */}
           <div>
             <div
               style={{
@@ -133,12 +117,9 @@ export default function LoginPage() {
                 type="text"
                 inputMode="numeric"
                 placeholder="Numéro de téléphone ..."
-                disabled={loginMutation.isPending}
-                {...register('phone', {
-                  onChange: (e) => {
-                    e.target.value = e.target.value.replace(/\s+/g, '');
-                  },
-                })}
+                disabled={verifyMutation.isPending}
+                {...register('phone')}
+                onChange={(e) => setValue('phone', e.target.value.replace(/\s+/g, ''))}
                 style={{
                   width: '100%',
                   backgroundColor: 'transparent',
@@ -158,7 +139,7 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Password input */}
+          {/* Date of Birth */}
           <div>
             <div
               style={{
@@ -169,12 +150,11 @@ export default function LoginPage() {
                 padding: '0 14px',
               }}
             >
-              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+              <Calendar style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
               <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Mot de passe ..."
-                disabled={loginMutation.isPending}
-                {...register('password')}
+                type="date"
+                disabled={verifyMutation.isPending}
+                {...register('dateOfBirth')}
                 style={{
                   width: '100%',
                   backgroundColor: 'transparent',
@@ -186,26 +166,19 @@ export default function LoginPage() {
                   fontWeight: 500,
                 }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#999' }}
-              >
-                {showPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}
-              </button>
             </div>
-            {errors.password && (
+            {errors.dateOfBirth && (
               <span style={{ color: '#fde2e2', fontSize: '11px', fontWeight: 600, padding: '4px 8px', display: 'block' }}>
-                {errors.password.message}
+                {errors.dateOfBirth.message}
               </span>
             )}
           </div>
 
-          {/* Submit button */}
+          {/* Submit */}
           <div style={{ paddingTop: '8px' }}>
             <button
               type="submit"
-              disabled={loginMutation.isPending}
+              disabled={verifyMutation.isPending}
               style={{
                 backgroundColor: '#111',
                 color: '#fff',
@@ -214,39 +187,23 @@ export default function LoginPage() {
                 padding: '14px 0',
                 fontSize: '14px',
                 fontWeight: 700,
-                cursor: loginMutation.isPending ? 'not-allowed' : 'pointer',
+                cursor: verifyMutation.isPending ? 'not-allowed' : 'pointer',
                 width: '100%',
                 letterSpacing: '0.5px',
-                opacity: loginMutation.isPending ? 0.5 : 1,
+                opacity: verifyMutation.isPending ? 0.5 : 1,
               }}
             >
-              {loginMutation.isPending ? 'Connexion...' : 'Entrer'}
+              {verifyMutation.isPending ? 'Vérification...' : 'Vérifier mon identité'}
             </button>
           </div>
 
-          {/* Links */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+          {/* Back to login */}
+          <div style={{ textAlign: 'center', marginTop: '4px' }}>
             <Link
-              to="/forgot-password"
-              style={{
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 600,
-                textDecoration: 'underline',
-              }}
+              to="/login"
+              style={{ color: '#fff', fontSize: '12px', fontWeight: 600, textDecoration: 'underline' }}
             >
-              Mot de passe oublié ?
-            </Link>
-            <Link
-              to="/create-account"
-              style={{
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 600,
-                textDecoration: 'underline',
-              }}
-            >
-              Pas encore de compte ? S'inscrire
+              Retour à la connexion
             </Link>
           </div>
         </form>

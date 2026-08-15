@@ -1,44 +1,32 @@
 import apiClient from '@/api/axios';
 import type {
-  RequestCodeRequest,
-  RequestCodeResponse,
-  VerifyCodeRequest,
-  VerifyCodeResponse,
   RegisterRequest,
   RegisterResponse,
-  LoginRequestCodeRequest,
-  LoginVerifyRequest,
+  LoginRequest,
   LoginResponse,
+  ForgotPasswordVerifyRequest,
+  ForgotPasswordVerifyResponse,
+  ResetPasswordRequest,
   CurrentUserResponse,
 } from '@/types/auth.types';
 import type { ApiResponse } from '@/types/api.types';
 
 export const AuthService = {
-  // ─── Registration OTP Flow (new customers only) ────────────────────────────
-
-  /** Step 1: Send registration OTP to phone */
-  requestCode: (data: RequestCodeRequest) =>
-    apiClient.post<ApiResponse<RequestCodeResponse>>('/auth/request-code', data),
-
-  /** Step 2: Verify registration OTP — returns { isNewUser, verificationToken } */
-  verifyCode: (data: VerifyCodeRequest) =>
-    apiClient.post<ApiResponse<VerifyCodeResponse>>('/auth/verify-code', data),
-
-  /** Step 3: Create customer account with name + verificationToken */
+  /** Create customer account with phone, name, dateOfBirth & password */
   register: (data: RegisterRequest) =>
     apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', data),
 
-  // ─── Login OTP Flow (all users: customers + driver) ────────────────────────
+  /** Login with phone & password */
+  login: (data: LoginRequest) =>
+    apiClient.post<ApiResponse<LoginResponse>>('/auth/login', data),
 
-  /** Step 1: Request a login OTP for any registered phone */
-  loginRequestCode: (data: LoginRequestCodeRequest) =>
-    apiClient.post<ApiResponse<{ message: string }>>('/auth/login/request-code', data),
+  /** Verify identity with phone, name & dateOfBirth for password recovery */
+  forgotPasswordVerify: (data: ForgotPasswordVerifyRequest) =>
+    apiClient.post<ApiResponse<ForgotPasswordVerifyResponse>>('/auth/forgot-password/verify', data),
 
-  /** Step 2: Verify login OTP — returns JWT + user (role determined by backend) */
-  loginVerify: (data: LoginVerifyRequest) =>
-    apiClient.post<ApiResponse<LoginResponse>>('/auth/login/verify', data),
-
-  // ─── Session ───────────────────────────────────────────────────────────────
+  /** Reset password using short-lived resetToken */
+  resetPassword: (data: ResetPasswordRequest) =>
+    apiClient.post<ApiResponse<{ message: string }>>('/auth/forgot-password/reset', data),
 
   /** Get current authenticated user */
   getCurrentUser: () =>
@@ -48,3 +36,4 @@ export const AuthService = {
   logout: () =>
     apiClient.post<ApiResponse<null>>('/auth/logout'),
 };
+

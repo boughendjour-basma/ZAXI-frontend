@@ -22,19 +22,36 @@ export interface Location {
 // ─── Estimate ─────────────────────────────────────────────────────────────────
 
 export interface BookingEstimateRequest {
-  pickupLat: number;
-  pickupLng: number;
-  dropoffLat: number;
-  dropoffLng: number;
-  pickupAddress?: string;
-  dropoffAddress?: string;
+  pickup: {
+    latitude: number;
+    longitude: number;
+  };
+  destination: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface BookingEstimate {
+  pricingType: 'CITY' | 'DISTANCE';
   distanceKm: number;
   durationMinutes: number;
+  ratePerKm: number | null;
   estimatedPrice: number;
-  currency: string;
+}
+
+export interface CreateBookingPayload {
+  pickup: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  destination: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  scheduledAt?: string;
 }
 
 // ─── Booking ──────────────────────────────────────────────────────────────────
@@ -44,18 +61,49 @@ export interface Booking {
   customerId: string;
   driverId?: string | null;
   status: BookingStatus;
-  pickupLat: number;
-  pickupLng: number;
+  pickupLat?: number;
+  pickupLng?: number;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
   pickupAddress?: string | null;
-  dropoffLat: number;
-  dropoffLng: number;
+  dropoffLat?: number;
+  dropoffLng?: number;
+  destinationLatitude?: number;
+  destinationLongitude?: number;
   dropoffAddress?: string | null;
+  destinationAddress?: string | null;
   distanceKm?: number | null;
   durationMinutes?: number | null;
   estimatedPrice?: number | null;
   finalPrice?: number | null;
+  pricingType?: 'CITY' | 'DISTANCE';
+  customer?: {
+    id?: string;
+    name?: string;
+    phone?: string | null;
+  } | null;
+  driver?: {
+    id: string;
+    name: string;
+    phone?: string | null;
+    profilePhoto?: string | null;
+  } | null;
+  payment?: {
+    id: string;
+    amount: number;
+    paymentMethod: PaymentMethod;
+    status: PaymentStatus;
+    paidAt?: string | null;
+  } | null;
+  rating?: {
+    id: string;
+    score: number;
+    comment?: string | null;
+    createdAt?: string;
+  } | null;
+  scheduledAt?: string | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 // ─── Driver Location ─────────────────────────────────────────────────────────

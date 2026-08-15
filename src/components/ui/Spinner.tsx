@@ -17,7 +17,7 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
       role="status"
       aria-label="Loading"
       className={cn(
-        'rounded-full border-slate-200 border-t-teal-500 animate-spin',
+        'rounded-full border-[#FFE0A0] border-t-teal-500 animate-spin',
         sizeClasses[size],
         className,
       )}
@@ -27,10 +27,10 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
 
 export function FullPageSpinner() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-50">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="lg" />
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading…</p>
+        <p className="text-sm text-[#888] font-medium">Loading…</p>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import type {
   Booking,
   BookingEstimate,
   BookingEstimateRequest,
+  CreateBookingPayload,
   Rating,
   Payment,
 } from '@/types/booking.types';
@@ -11,14 +12,11 @@ import type { ApiResponse } from '@/types/api.types';
 export const BookingService = {
   /** Get price + distance estimate before booking */
   getEstimate: (data: BookingEstimateRequest) =>
-    apiClient.post<ApiResponse<BookingEstimate>>('/bookings/estimate', data),
+    apiClient.post<BookingEstimate>('/bookings/estimate', data),
 
   /** Create a new booking */
-  createBooking: (data: Omit<BookingEstimateRequest, 'pickupAddress' | 'dropoffAddress'> & {
-    pickupAddress?: string;
-    dropoffAddress?: string;
-  }) =>
-    apiClient.post<ApiResponse<Booking>>('/bookings', data),
+  createBooking: (data: CreateBookingPayload) =>
+    apiClient.post<ApiResponse<{ booking: Booking }>>('/bookings', data),
 
   /** Get all customer bookings */
   getMyBookings: () =>

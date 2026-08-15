@@ -20,7 +20,7 @@ export default function SplashPage() {
   }, [isAuthenticated, role, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-500 via-teal-600 to-emerald-700 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FF9900] via-teal-600 to-emerald-700 relative overflow-hidden">
       {/* Animated rings */}
       {[1, 2, 3].map((i) => (
         <motion.div

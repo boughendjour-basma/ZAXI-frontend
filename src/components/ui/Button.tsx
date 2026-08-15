@@ -16,15 +16,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white shadow-sm shadow-teal-500/30 hover:shadow-teal-500/50',
+    'bg-[#FF9900] hover:brightness-105 active:brightness-95 text-black font-bold shadow-sm shadow-amber-200',
   secondary:
-    'bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600',
+    'bg-[#1A1A1A] hover:bg-black active:bg-[#333] text-white',
   ghost:
-    'bg-transparent hover:bg-slate-100 active:bg-slate-200 text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800',
+    'bg-transparent hover:bg-[#FFF3D6] active:bg-[#FFE0A0] text-[#555]',
   danger:
-    'bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white shadow-sm shadow-rose-500/30',
+    'bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white shadow-sm shadow-rose-200',
   outline:
-    'border border-teal-500 text-teal-600 hover:bg-teal-50 active:bg-teal-100 dark:text-teal-400 dark:hover:bg-teal-950',
+    'border border-[#FF9900] text-[#FF9900] hover:bg-[#FFF3D6] active:bg-[#FFE0A0]',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -58,7 +58,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           'inline-flex items-center justify-center font-semibold',
           'transition-all duration-200 ease-out',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9900] focus-visible:ring-offset-2',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
           variantClasses[variant],
           sizeClasses[size],

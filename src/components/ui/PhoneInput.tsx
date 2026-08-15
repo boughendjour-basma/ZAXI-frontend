@@ -16,7 +16,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="text-sm font-medium text-[#333]"
           >
             {label}
           </label>
@@ -25,11 +25,11 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
           className={cn(
             'flex h-12 rounded-2xl border overflow-hidden transition-all duration-200',
             'focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-transparent',
-            error ? 'border-rose-400' : 'border-slate-200 dark:border-slate-700',
+            error ? 'border-rose-400' : 'border-[#FFE0A0]',
           )}
         >
-          <div className="flex items-center px-3 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 min-w-fit">
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+          <div className="flex items-center px-3 bg-white border-r border-[#FFE0A0] min-w-fit">
+            <span className="text-sm font-semibold text-[#555] whitespace-nowrap">
               🇩🇿 {countryCode}
             </span>
           </div>
@@ -39,8 +39,8 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             type="tel"
             inputMode="numeric"
             className={cn(
-              'flex-1 h-full px-3 bg-white dark:bg-slate-900 outline-none',
-              'text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm',
+              'flex-1 h-full px-3 bg-white outline-none',
+              'text-[#1A1A1A] placeholder:text-[#888] text-sm',
               className,
             )}
             {...props}

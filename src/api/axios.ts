@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/api`,
@@ -28,11 +28,17 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const status = error.response?.status;
+    const pathname = window.location.pathname;
 
-    if (status === 401) {
-      // Clear auth state and redirect to login
-      // NOTE: Structured to easily add refresh token logic later —
-      // intercept here, attempt /api/auth/refresh, retry original request.
+    const isAuthPage =
+      pathname === '/login' ||
+      pathname === '/create-account' ||
+      pathname === '/forgot-password' ||
+      pathname === '/reset-password' ||
+      pathname === '/welcome' ||
+      pathname === '/splash';
+
+    if (status === 401 && !isAuthPage) {
       useAuthStore.getState().clearAuth();
       window.location.replace('/login');
     }

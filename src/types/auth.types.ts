@@ -6,6 +6,7 @@ export interface User {
   id: string;
   phone: string;
   name: string | null;
+  dateOfBirth?: string | null;
   role: UserRole;
   createdAt: string;
   updatedAt: string;
@@ -16,31 +17,28 @@ export interface AuthTokenPayload {
   role: UserRole;
 }
 
-// ─── Request DTOs ─────────────────────────────────────────────────────────────
-
-// Registration OTP flow (new customers only)
-export interface RequestCodeRequest {
-  phone: string;
-}
-
-export interface VerifyCodeRequest {
-  phone: string;
-  code: string;
-}
+// ─── Request DTOs (Password Auth) ────────────────────────────────────────────
 
 export interface RegisterRequest {
-  verificationToken: string;
+  phone: string;
   name: string;
+  dateOfBirth: string;
+  password: string;
 }
 
-// Login OTP flow (all users: customers + driver)
-export interface LoginRequestCodeRequest {
+export interface LoginRequest {
   phone: string;
+  password: string;
 }
 
-export interface LoginVerifyRequest {
+export interface ForgotPasswordVerifyRequest {
   phone: string;
-  code: string;
+  dateOfBirth: string;
+}
+
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
 }
 
 // ─── Response DTOs ────────────────────────────────────────────────────────────
@@ -50,20 +48,16 @@ export interface LoginResponse {
   user: User;
 }
 
-export interface RequestCodeResponse {
-  message: string;
-}
-
-export interface VerifyCodeResponse {
-  isNewUser: boolean;
-  verificationToken?: string;
-}
-
 export interface RegisterResponse {
   token: string;
   user: User;
 }
 
+export interface ForgotPasswordVerifyResponse {
+  resetToken: string;
+}
+
 export interface CurrentUserResponse {
   user: User;
 }
+

@@ -18,14 +18,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="text-sm font-medium text-[#333]"
           >
             {label}
           </label>
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <span className="absolute left-3 text-slate-400 pointer-events-none">
+            <span className="absolute left-3 text-[#888] pointer-events-none">
               {leftIcon}
             </span>
           )}
@@ -33,13 +33,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full h-12 rounded-2xl border bg-white dark:bg-slate-900',
-              'text-slate-900 dark:text-slate-100 placeholder:text-slate-400',
+              'w-full h-12 rounded-2xl border bg-white',
+              'text-[#1A1A1A] placeholder:text-[#AAA]',
               'transition-all duration-200 outline-none',
-              'focus:ring-2 focus:ring-teal-500 focus:border-transparent',
+              'focus:ring-2 focus:ring-[#FF9900] focus:border-transparent',
               error
                 ? 'border-rose-400 focus:ring-rose-400'
-                : 'border-slate-200 dark:border-slate-700',
+                : 'border-[#FFE0A0]',
               leftIcon ? 'pl-10' : 'pl-4',
               rightIcon ? 'pr-10' : 'pr-4',
               className,
@@ -47,7 +47,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <span className="absolute right-3 text-slate-400">
+            <span className="absolute right-3 text-[#888]">
               {rightIcon}
             </span>
           )}
@@ -56,7 +56,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p className="text-xs text-rose-500 font-medium">{error}</p>
         )}
         {hint && !error && (
-          <p className="text-xs text-slate-400">{hint}</p>
+          <p className="text-xs text-[#888]">{hint}</p>
         )}
       </div>
     );

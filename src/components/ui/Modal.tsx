@@ -66,7 +66,7 @@ export function Modal({
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: 'spring', damping: 28, stiffness: 350 }}
             className={cn(
-              'relative w-full bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl',
+              'relative w-full bg-white rounded-3xl p-6 shadow-2xl',
               sizeClasses[size],
             )}
             role="dialog"
@@ -76,14 +76,14 @@ export function Modal({
             {(title || showCloseButton) && (
               <div className="flex items-center justify-between mb-4">
                 {title && (
-                  <h2 id="modal-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  <h2 id="modal-title" className="text-lg font-bold text-[#1A1A1A]">
                     {title}
                   </h2>
                 )}
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="ml-auto p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
+                    className="ml-auto p-1.5 rounded-xl hover:bg-white transition-colors text-[#888]"
                     aria-label="Close modal"
                   >
                     <X className="h-5 w-5" />
