@@ -4,6 +4,8 @@ export type BookingStatus =
   | 'PENDING'
   | 'ACCEPTED'
   | 'REJECTED'
+  | 'DRIVER_ARRIVING'
+  | 'ARRIVED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'CANCELLED';

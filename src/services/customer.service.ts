@@ -11,10 +11,10 @@ export const CustomerService = {
   // ─── Profile ───────────────────────────────────────────────────────────────
 
   getProfile: () =>
-    apiClient.get<ApiResponse<{ customer: CustomerProfile }>>('/customers/me'),
+    apiClient.get<ApiResponse<{ user: CustomerProfile; customer?: CustomerProfile }>>('/customers/me'),
 
   updateProfile: (data: { name?: string }) =>
-    apiClient.patch<ApiResponse<{ customer: CustomerProfile }>>('/customers/me', data),
+    apiClient.patch<ApiResponse<{ user: CustomerProfile; customer?: CustomerProfile }>>('/customers/me', data),
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiClient.patch<ApiResponse<null>>('/customers/me/password', data),

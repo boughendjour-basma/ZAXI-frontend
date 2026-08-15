@@ -24,8 +24,8 @@ export default function DriverAnnouncementsPage() {
 
   // Form states
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState('GÉNÉRAL');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER'>('OTHER');
 
   // Query announcements
   const { data: res, isLoading, isError, refetch } = useQuery({
@@ -42,8 +42,11 @@ export default function DriverAnnouncementsPage() {
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (data: { title: string; content: string; category?: string }) =>
-      DriverService.createAnnouncement(data),
+    mutationFn: (data: {
+      title: string;
+      description: string;
+      category: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+    }) => DriverService.createAnnouncement(data),
     onSuccess: () => {
       toast.success('Annonce publiée avec succès !');
       queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
@@ -56,8 +59,17 @@ export default function DriverAnnouncementsPage() {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { title?: string; content?: string; category?: string } }) =>
-      DriverService.updateAnnouncement(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        title?: string;
+        description?: string;
+        category?: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+      };
+    }) => DriverService.updateAnnouncement(id, data),
     onSuccess: () => {
       toast.success('Annonce mise à jour !');
       queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
@@ -83,16 +95,16 @@ export default function DriverAnnouncementsPage() {
   const openCreateModal = () => {
     setEditingId(null);
     setTitle('');
-    setContent('');
-    setCategory('GÉNÉRAL');
+    setDescription('');
+    setCategory('OTHER');
     setIsModalOpen(true);
   };
 
   const openEditModal = (item: Announcement) => {
     setEditingId(item.id);
     setTitle(item.title);
-    setContent(item.content);
-    setCategory(item.category || 'GÉNÉRAL');
+    setDescription(item.description || (item as any).content || '');
+    setCategory(item.category || 'OTHER');
     setIsModalOpen(true);
   };
 
@@ -100,25 +112,25 @@ export default function DriverAnnouncementsPage() {
     setIsModalOpen(false);
     setEditingId(null);
     setTitle('');
-    setContent('');
+    setDescription('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      toast.error('Veuillez remplir le titre et le contenu.');
+    if (!title.trim() || !description.trim()) {
+      toast.error('Veuillez remplir le titre et la description.');
       return;
     }
 
     if (editingId) {
       updateMutation.mutate({
         id: editingId,
-        data: { title: title.trim(), content: content.trim(), category },
+        data: { title: title.trim(), description: description.trim(), category },
       });
     } else {
       createMutation.mutate({
         title: title.trim(),
-        content: content.trim(),
+        description: description.trim(),
         category,
       });
     }
@@ -228,7 +240,7 @@ export default function DriverAnnouncementsPage() {
               </div>
 
               <p className="text-xs text-[#555] leading-relaxed whitespace-pre-line">
-                {item.content}
+                {item.description || (item as any).content}
               </p>
 
               <div className="text-[10px] text-[#888] font-medium">
@@ -257,12 +269,14 @@ export default function DriverAnnouncementsPage() {
                 <label className="text-[11px] font-semibold text-[#888]">Catégorie</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => setCategory(e.target.value as any)}
                   className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
                 >
-                  <option value="GÉNÉRAL">Général</option>
-                  <option value="HORAIRES">Horaires & Disponibilité</option>
-                  <option value="PROMOTION">Offre Spéciale / Promo</option>
+                  <option value="OTHER">Autre / Général</option>
+                  <option value="AIRPORT">Aéroport / Transfert</option>
+                  <option value="BEACH">Plage / Estival</option>
+                  <option value="TOUR">Circuit Touristique</option>
+                  <option value="SPECIAL_OFFER">Offre Spéciale / Promo</option>
                 </select>
               </div>
 
@@ -279,12 +293,12 @@ export default function DriverAnnouncementsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Contenu de l'annonce</label>
+                <label className="text-[11px] font-semibold text-[#888]">Description de l'annonce</label>
                 <textarea
                   rows={4}
                   placeholder="Rédigez votre message à l'attention des clients..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
                   required
                 />

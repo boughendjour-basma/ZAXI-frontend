@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/store/authStore';
 import { DriverService } from '@/services/driver.service';
 import { BookingService } from '@/services/booking.service';
 import { CustomerBookingCard } from '@/components/customer/CustomerBookingCard';
@@ -12,10 +11,9 @@ import car1Url from '@/assets/car_1.jpg';
 import car2Url from '@/assets/car_2.jpg';
 
 export default function CustomerHomePage() {
-  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'current' | 'scheduled'>('current');
+  const [activeTab, setActiveTab] = useState<'current' | 'scheduled' | 'offers'>('current');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
   const [showTrackingMap, setShowTrackingMap] = useState(true);
@@ -24,13 +22,15 @@ export default function CustomerHomePage() {
   const { data: driverProfileRes } = useQuery({
     queryKey: ['publicDriverProfile'],
     queryFn: () => DriverService.getPublicProfile(),
+    refetchInterval: 30_000, // refresh availability every 30s
   });
 
-  const driver = driverProfileRes?.data?.data?.driver ?? {
-    name: 'Zakaria boukejar',
+  const rawDriver = driverProfileRes?.data?.data?.driver ?? (driverProfileRes?.data as any);
+  const driver = rawDriver ?? {
+    driverName: 'Zakaria boukejar',
     vehicleModel: 'Golf 7',
     vehiclePlate: '029954-112-34',
-    phone: '0555123456',
+    phoneNumber: '0555123456',
   };
 
   // ── Customer bookings (poll every 5s for status updates) ──────────────────
@@ -87,41 +87,18 @@ export default function CustomerHomePage() {
     return (
       <RideTrackingScreen
         booking={activeBooking}
-        driverName={driver.name ?? 'Chauffeur'}
+        driverName={driver.driverName ?? driver.name ?? 'Chauffeur'}
         driverVehicle={driver.vehicleModel ?? 'Véhicule'}
         driverPlate={driver.vehiclePlate ?? '—'}
-        driverPhone={driver.phone ?? ''}
+        driverPhone={driver.phoneNumber ?? driver.phone ?? ''}
         onBackToHome={() => setShowTrackingMap(false)}
       />
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-white max-w-md mx-auto relative shadow-2xl">
+    <div className="min-h-screen flex flex-col bg-white relative">
       <div className="flex-1 flex flex-col">
-
-        {/* ── Top Header — Orange bar ───────────────────────────────────────── */}
-        <div
-          style={{
-            backgroundColor: '#FF9900',
-            padding: '24px 24px 20px 24px',
-            textAlign: 'center',
-            borderBottomLeftRadius: '30px',
-            borderBottomRightRadius: '30px',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '18px',
-              fontWeight: 700,
-              color: '#000',
-              margin: 0,
-              letterSpacing: '0.2px',
-            }}
-          >
-            Bienvenue {user?.name ?? 'Name'}
-          </h2>
-        </div>
 
         {/* Active Booking Floating Banner when tracking is minimized */}
         {activeBooking && (activeBooking.status === 'ACCEPTED' || activeBooking.status === 'IN_PROGRESS') && (
@@ -142,9 +119,10 @@ export default function CustomerHomePage() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            padding: '14px 20px',
+            gap: '8px',
+            padding: '12px 16px',
             borderBottom: '1px solid #f1f1f1',
+            overflowX: 'auto',
           }}
         >
           <button
@@ -153,7 +131,7 @@ export default function CustomerHomePage() {
               setShowTrackingMap(false);
               setActiveTab('current');
             }}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
             title="Retour à l'accueil"
           >
             <HomeIcon className="h-6 w-6" style={{ fill: '#FF9900', color: '#FF9900' }} />
@@ -166,13 +144,15 @@ export default function CustomerHomePage() {
               fontSize: '11px',
               fontWeight: 600,
               border: activeTab === 'current' ? '1.5px solid #333' : '1.5px solid #ccc',
-              backgroundColor: 'transparent',
-              color: activeTab === 'current' ? '#222' : '#888',
+              backgroundColor: activeTab === 'current' ? '#1A1A1A' : 'transparent',
+              color: activeTab === 'current' ? '#fff' : '#888',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'all 0.2s',
             }}
           >
-            Reservations finis
+            Réservations
           </button>
           <button
             onClick={() => setActiveTab('scheduled')}
@@ -182,13 +162,33 @@ export default function CustomerHomePage() {
               fontSize: '11px',
               fontWeight: 600,
               border: activeTab === 'scheduled' ? '1.5px solid #333' : '1.5px solid #ccc',
-              backgroundColor: 'transparent',
-              color: activeTab === 'scheduled' ? '#222' : '#888',
+              backgroundColor: activeTab === 'scheduled' ? '#1A1A1A' : 'transparent',
+              color: activeTab === 'scheduled' ? '#fff' : '#888',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'all 0.2s',
             }}
           >
-            Reservations programmes
+            Programmées
+          </button>
+          <button
+            onClick={() => setActiveTab('offers')}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: activeTab === 'offers' ? '1.5px solid #FF9900' : '1.5px solid #ccc',
+              backgroundColor: activeTab === 'offers' ? '#FF9900' : 'transparent',
+              color: activeTab === 'offers' ? '#000' : '#888',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'all 0.2s',
+            }}
+          >
+            🎯 Nos offres
           </button>
         </div>
 
@@ -243,7 +243,7 @@ export default function CustomerHomePage() {
                 </div>
                 <div className="text-right">
                   <p className="text-[9px] font-bold text-[#888] uppercase tracking-wider">Chauffeur</p>
-                  <p className="text-sm font-bold text-[#1A1A1A]">{driver.name}</p>
+                  <p className="text-sm font-bold text-[#1A1A1A]">{driver.driverName ?? driver.name}</p>
                 </div>
               </div>
 
@@ -279,7 +279,7 @@ export default function CustomerHomePage() {
                     lineHeight: 1.2,
                   }}
                 >
-                  {driver.name}
+                  {driver.driverName ?? driver.name}
                 </h3>
                 <div
                   style={{
@@ -356,53 +356,128 @@ export default function CustomerHomePage() {
                   Reserver maintenant
                 </button>
               </div>
+            </div>
 
-              {/* Nos offres pill */}
-              <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
-                <button
-                  style={{
-                    backgroundColor: '#fff',
-                    color: '#222',
-                    border: '2px solid #333',
-                    borderRadius: '30px',
-                    padding: '10px 28px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    letterSpacing: '0.3px',
-                  }}
-                >
-                  Nos offres
-                </button>
+          ) : activeTab === 'scheduled' ? (
+            /* ── Reservations Programmees ─── */
+            <div className="space-y-4 py-4">
+              <div className="bg-white rounded-2xl border border-[#FFE0A0] p-8 shadow-sm text-center space-y-2 mt-4">
+                <Calendar className="h-10 w-10 text-[#AAA] mx-auto stroke-1" />
+                <h4 className="text-sm font-bold text-[#1A1A1A]">Aucune réservation programmée</h4>
+                <p className="text-xs text-[#888]">Vos courses à venir apparaîtront ici.</p>
               </div>
             </div>
 
           ) : (
-            /* ── Reservations Programmees ─── */
+            /* ── Nos Offres — Driver Announcements ─── */
             <div className="space-y-4 py-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base font-extrabold text-[#1A1A1A]">Offres du chauffeur</span>
+                <span className="text-[10px] font-bold text-[#FF9900] bg-[#FFF3D6] px-2 py-0.5 rounded-full border border-[#FFE0A0]">
+                  {announcements.length} offre{announcements.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
               {announcements.length > 0 ? (
-                announcements.map((ann: any) => (
-                  <div
-                    key={ann.id}
-                    className="bg-white rounded-2xl border border-[#FFE0A0] p-5 shadow-sm text-left space-y-2"
-                  >
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-sm font-bold text-[#1A1A1A]">{ann.title}</h4>
-                      <span className="text-[10px] font-bold uppercase text-zaxi-orange bg-zaxi-orange/10 px-2 py-0.5 rounded">
-                        {ann.category || 'OFFRE'}
-                      </span>
+                announcements.map((ann: any) => {
+                  const categoryLabels: Record<string, { label: string; emoji: string }> = {
+                    AIRPORT: { label: 'Aéroport', emoji: '✈️' },
+                    BEACH: { label: 'Plage', emoji: '🏖️' },
+                    TOUR: { label: 'Circuit', emoji: '🗺️' },
+                    SPECIAL_OFFER: { label: 'Offre Spéciale', emoji: '🎁' },
+                    OTHER: { label: 'Autre', emoji: '📌' },
+                  };
+                  const cat = categoryLabels[ann.category] ?? { label: ann.category || 'Offre', emoji: '📌' };
+
+                  return (
+                    <div
+                      key={ann.id}
+                      className="bg-white rounded-3xl border border-[#FFE0A0] shadow-sm text-left overflow-hidden"
+                      style={{ borderLeft: '4px solid #FF9900' }}
+                    >
+                      {/* Card header */}
+                      <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-base">{cat.emoji}</span>
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+                              style={{ backgroundColor: '#FFF3D6', color: '#CC7A00', border: '1px solid #FFE0A0' }}
+                            >
+                              {cat.label}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-extrabold text-[#1A1A1A] leading-tight">
+                            {ann.title}
+                          </h4>
+                        </div>
+                        {ann.price != null && (
+                          <div className="shrink-0 text-right">
+                            <p className="text-xl font-black text-[#FF9900] leading-tight">
+                              {ann.price.toLocaleString('fr-DZ')}
+                            </p>
+                            <p className="text-[10px] text-[#888] font-semibold">DA</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      <div className="px-5 pb-4">
+                        <p className="text-xs text-[#555] leading-relaxed">
+                          {ann.description || ann.content}
+                        </p>
+                      </div>
+
+                      {/* Route info if available */}
+                      {(ann.departureLocation || ann.destinationLocation) && (
+                        <div
+                          className="mx-5 mb-4 px-4 py-3 rounded-2xl flex items-center gap-3 text-xs font-medium text-[#444]"
+                          style={{ backgroundColor: '#FFFBF0', border: '1px solid #FFE0A0' }}
+                        >
+                          {ann.departureLocation && (
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-[#FF9900] inline-block" />
+                              {ann.departureLocation}
+                            </span>
+                          )}
+                          {ann.departureLocation && ann.destinationLocation && (
+                            <span className="text-[#ccc]">→</span>
+                          )}
+                          {ann.destinationLocation && (
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-[#1A1A1A] inline-block" />
+                              {ann.destinationLocation}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* CTA */}
+                      <div
+                        className="px-5 pb-5"
+                      >
+                        <button
+                          onClick={() => setIsBookingModalOpen(true)}
+                          className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider transition-all"
+                          style={{
+                            backgroundColor: '#1A1A1A',
+                            color: '#fff',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Réserver maintenant
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-xs text-[#555] leading-relaxed">{ann.content}</p>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <div className="bg-white rounded-2xl border border-[#FFE0A0] p-8 shadow-sm text-center space-y-2 mt-8">
-                  <Calendar className="h-10 w-10 text-[#AAA] mx-auto stroke-1" />
-                  <h4 className="text-sm font-bold text-[#1A1A1A]">
-                    Aucune offre programmée disponible
-                  </h4>
+                <div className="bg-white rounded-2xl border border-[#FFE0A0] p-10 shadow-sm text-center space-y-3 mt-4">
+                  <span className="text-4xl">🎯</span>
+                  <h4 className="text-sm font-bold text-[#1A1A1A]">Aucune offre disponible</h4>
                   <p className="text-xs text-[#888]">
-                    Les trajets spéciaux (aéroports, plages) s'afficheront ici.
+                    Le chauffeur publiera bientôt des offres spéciales : aéroport, plage, circuits…
                   </p>
                 </div>
               )}
@@ -414,10 +489,7 @@ export default function CustomerHomePage() {
       {/* ── Decorative Bottom Footer ──────────────────────────────────────────── */}
       <div
         style={{
-          height: '64px',
-          backgroundColor: '#FF9900',
-          borderTopLeftRadius: '30px',
-          borderTopRightRadius: '30px',
+          height: '32px',
           flexShrink: 0,
         }}
       />

@@ -5,7 +5,9 @@ import type { ApiResponse } from '@/types/api.types';
 export interface DriverProfile {
   id: string;
   name: string | null;
+  driverName?: string | null;
   phone: string;
+  phoneNumber?: string | null;
   vehicleMake?: string | null;
   vehicleModel?: string | null;
   vehicleColor?: string | null;
@@ -13,14 +15,20 @@ export interface DriverProfile {
   bio?: string | null;
   avatarUrl?: string | null;
   rating?: number | null;
+  isOnline?: boolean;
+  workingHours?: string | null;
+  description?: string | null;
 }
 
 export interface DriverPricing {
-  baseFare: number;
-  perKmRate: number;
-  perMinuteRate: number;
-  minimumFare: number;
-  currency: string;
+  cityFlatFare: number;
+  outsideRatePerKm: number;
+  // Legacy compatibility fields
+  baseFare?: number;
+  perKmRate?: number;
+  perMinuteRate?: number;
+  minimumFare?: number;
+  currency?: string;
 }
 
 export interface DriverEarnings {
@@ -33,11 +41,18 @@ export interface DriverEarnings {
 
 export interface Announcement {
   id: string;
+  driverId?: string;
   title: string;
-  content: string;
-  category?: string | null;
+  description: string;
+  category: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+  price?: number | null;
+  image?: string | null;
+  departureLocation?: string | null;
+  destinationLocation?: string | null;
+  availableDate?: string | null;
+  isActive?: boolean;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export const DriverService = {
@@ -52,12 +67,15 @@ export const DriverService = {
   getPublicProfile: () =>
     apiClient.get<ApiResponse<{ driver: DriverProfile }>>('/public/driver-profile'),
 
+  setAvailability: (isOnline: boolean) =>
+    apiClient.patch<ApiResponse<{ isOnline: boolean }>>('/driver/availability', { isOnline }),
+
   // ─── Pricing ───────────────────────────────────────────────────────────────
 
   getPricing: () =>
     apiClient.get<ApiResponse<DriverPricing>>('/driver/pricing'),
 
-  updatePricing: (data: Partial<DriverPricing>) =>
+  updatePricing: (data: { cityFlatFare?: number; outsideRatePerKm?: number }) =>
     apiClient.patch<ApiResponse<DriverPricing>>('/driver/pricing', data),
 
   // ─── Earnings ──────────────────────────────────────────────────────────────
@@ -99,10 +117,24 @@ export const DriverService = {
 
   // ─── Announcements ─────────────────────────────────────────────────────────
 
-  createAnnouncement: (data: { title: string; content: string; category?: string }) =>
+  createAnnouncement: (data: {
+    title: string;
+    description: string;
+    category: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+    price?: number;
+    departureLocation?: string;
+    destinationLocation?: string;
+  }) =>
     apiClient.post<ApiResponse<Announcement>>('/driver/announcements', data),
 
-  updateAnnouncement: (id: string, data: { title?: string; content?: string; category?: string }) =>
+  updateAnnouncement: (id: string, data: {
+    title?: string;
+    description?: string;
+    category?: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+    price?: number;
+    departureLocation?: string;
+    destinationLocation?: string;
+  }) =>
     apiClient.patch<ApiResponse<Announcement>>(`/driver/announcements/${id}`, data),
 
   deleteAnnouncement: (id: string) =>

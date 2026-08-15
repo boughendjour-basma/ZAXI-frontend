@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import logoUrl from '@/assets/logo.png';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -23,14 +24,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-8 flex flex-col items-center gap-2"
+        className="mb-8 flex flex-col items-center justify-center"
       >
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF9900] to-[#FF9900] flex items-center justify-center shadow-lg shadow-teal-500/30">
-          <span className="text-white font-black text-2xl tracking-tight">Z</span>
-        </div>
-        <span className="text-2xl font-black text-[#1A1A1A] tracking-tight">
-          ZAXI
-        </span>
+        <img src={logoUrl} alt="ZAXI" className="w-48 h-auto object-contain" />
       </motion.div>
 
       {/* Card */}

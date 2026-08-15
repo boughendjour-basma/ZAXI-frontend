@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { emitDriverLocation } from '@/lib/socket';
 import { useSocketStore } from '@/store/socketStore';
+import { DriverService } from '@/services/driver.service';
 
 export interface DriverGpsPosition {
   lat: number;
@@ -23,6 +24,7 @@ const IDLE_INTERVAL_MS = 8000;        // 8 seconds when online & waiting
 
 interface UseDriverLocationOptions {
   hasActiveRide?: boolean;
+  activeBookingId?: string;
 }
 
 /**
@@ -35,6 +37,7 @@ interface UseDriverLocationOptions {
  */
 export function useDriverLocation(options?: UseDriverLocationOptions): UseDriverLocationReturn {
   const hasActiveRide = options?.hasActiveRide ?? false;
+  const activeBookingId = options?.activeBookingId;
   const [position, setPosition] = useState<DriverGpsPosition | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,20 +59,32 @@ export function useDriverLocation(options?: UseDriverLocationOptions): UseDriver
       };
       setPosition(next);
 
-      // Adaptively throttle socket emits based on ride state
+      // Adaptively throttle location updates based on ride state
       const now = Date.now();
-      if (isConnected && now - lastEmitRef.current >= emitIntervalMs) {
+      if (now - lastEmitRef.current >= emitIntervalMs) {
         lastEmitRef.current = now;
-        emitDriverLocation({
+
+        const payload = {
           latitude: next.lat,
           longitude: next.lng,
-          heading: next.heading,
-          speed: next.speed,
-          accuracy: next.accuracy,
-        });
+          heading: next.heading ?? undefined,
+          speed: next.speed ?? undefined,
+          accuracy: next.accuracy ?? undefined,
+        };
+
+        if (isConnected) {
+          emitDriverLocation({ ...payload, bookingId: activeBookingId } as any);
+        }
+
+        // Persistent REST update if driver has an active booking
+        if (activeBookingId) {
+          DriverService.updateLocation(activeBookingId, payload).catch((err) => {
+            console.warn('[useDriverLocation] REST location update failed:', err.message);
+          });
+        }
       }
     },
-    [isConnected, emitIntervalMs],
+    [isConnected, emitIntervalMs, activeBookingId],
   );
 
   const handlePositionRef = useRef(handlePosition);

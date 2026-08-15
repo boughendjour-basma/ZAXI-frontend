@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
+import logoUrl from '@/assets/logo.png';
 
 export default function SplashPage() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function SplashPage() {
   }, [isAuthenticated, role, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FF9900] via-teal-600 to-emerald-700 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FF9900] via-amber-500 to-orange-600 relative overflow-hidden">
       {/* Animated rings */}
       {[1, 2, 3].map((i) => (
         <motion.div
@@ -41,29 +42,25 @@ export default function SplashPage() {
         initial={{ scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', damping: 18, stiffness: 200, delay: 0.2 }}
-        className="flex flex-col items-center gap-4 relative z-10"
+        className="flex flex-col items-center gap-2 relative z-10 p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl"
       >
-        {/* Logo mark */}
-        <motion.div
-          animate={{ rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 1.5, delay: 0.8, ease: 'easeInOut' }}
-          className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border border-white/30"
-        >
-          <span className="text-white font-black text-5xl tracking-tighter">Z</span>
-        </motion.div>
+        {/* Logo image */}
+        <motion.img
+          src={logoUrl}
+          alt="ZAXI"
+          animate={{ scale: [0.95, 1.05, 1] }}
+          transition={{ duration: 1.2, ease: 'easeInOut' }}
+          className="w-56 h-auto object-contain filter drop-shadow-xl"
+        />
 
-        {/* Wordmark */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="text-center"
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-white/90 text-xs font-semibold tracking-widest uppercase mt-1"
         >
-          <h1 className="text-4xl font-black text-white tracking-tight">ZAXI</h1>
-          <p className="text-white/70 text-sm font-medium mt-1 tracking-widest uppercase">
-            Your ride, on demand
-          </p>
-        </motion.div>
+          Votre chauffeur, à votre service
+        </motion.p>
 
         {/* Loading dots */}
         <motion.div

@@ -48,7 +48,27 @@ export default function DriverDashboardPage() {
   const queryClient = useQueryClient();
   const { useSocketEvent } = useSocket();
 
-  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = useState<boolean>(false);
+
+  // ── Load initial online status from backend ───────────────────────────────
+  const { data: profileRes } = useQuery({
+    queryKey: ['driverProfileAvailability'],
+    queryFn: () => DriverService.getProfile(),
+    staleTime: 0,
+  });
+
+  useEffect(() => {
+    const backendIsOnline = (profileRes?.data as any)?.isOnline;
+    if (typeof backendIsOnline === 'boolean') {
+      setIsOnline(backendIsOnline);
+    }
+  }, [profileRes]);
+
+  // ── Persist availability to DB ────────────────────────────────────────────
+  const availabilityMutation = useMutation({
+    mutationFn: (online: boolean) => DriverService.setAvailability(online),
+    onError: () => toast.error('Erreur lors de la mise à jour du statut'),
+  });
 
   const { data: activeBookingRes } = useQuery({
     queryKey: ['driverActiveBooking'],
@@ -207,6 +227,7 @@ export default function DriverDashboardPage() {
             onClick={() => {
               const nextState = !isOnline;
               setIsOnline(nextState);
+              availabilityMutation.mutate(nextState);
               toast(nextState ? '🟢 Vous êtes maintenant EN LIGNE' : '🔴 Vous êtes maintenant HORS LIGNE');
             }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs transition-all shadow-md active:scale-95 ${

@@ -19,6 +19,7 @@ import { cn } from '@/utils/cn';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuthStore } from '@/store/authStore';
+import logoUrl from '@/assets/logo.png';
 
 interface NavItem {
   to: string;
@@ -45,14 +46,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-[#FFE0A0]">
-        <div className="w-9 h-9 rounded-xl bg-[#FF9900] flex items-center justify-center shadow-sm">
-          <span className="text-black font-black text-lg">Z</span>
-        </div>
-        <div>
-          <div className="font-black text-[#1A1A1A] leading-tight">ZAXI</div>
-          <div className="text-[10px] text-[#FF9900] font-bold uppercase tracking-wide">Driver Panel</div>
-        </div>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#FFE0A0]">
+        <img src={logoUrl} alt="ZAXI" className="h-9 w-auto object-contain" />
+        <span className="text-[10px] text-[#FF9900] font-bold uppercase tracking-wide bg-[#FFF3D6] px-2 py-0.5 rounded-full border border-[#FFE0A0]">
+          Driver
+        </span>
       </div>
 
       {/* Driver profile mini */}
@@ -156,10 +154,8 @@ export function DriverDashboardLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#FF9900] flex items-center justify-center shadow-sm">
-              <span className="text-black font-black text-xs">Z</span>
-            </div>
-            <span className="font-black text-[#1A1A1A] text-sm">ZAXI Driver</span>
+            <img src={logoUrl} alt="ZAXI Driver" className="h-7 w-auto object-contain" />
+            <span className="text-[10px] font-bold text-[#FF9900] uppercase tracking-wider bg-[#FFF3D6] px-1.5 py-0.5 rounded-md">Driver</span>
           </div>
           <div className="w-9" />
         </header>

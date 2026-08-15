@@ -15,27 +15,22 @@ export default function DriverPricingPage() {
 
   const rawData = pricingRes?.data?.data ?? (pricingRes?.data as any) ?? {};
   const pricingData: DriverPricing = {
-    baseFare: rawData.baseFare ?? 150,
-    perKmRate: rawData.perKmRate ?? 40,
-    perMinuteRate: rawData.perMinuteRate ?? 5,
-    minimumFare: rawData.minimumFare ?? 150,
-    currency: rawData.currency ?? 'DZD',
+    cityFlatFare: rawData.cityFlatFare ?? rawData.baseFare ?? 150,
+    outsideRatePerKm: rawData.outsideRatePerKm ?? rawData.perKmRate ?? 40,
   };
 
-  const [baseFare, setBaseFare] = useState<number>(150);
-  const [perKmRate, setPerKmRate] = useState<number>(40);
-  const [minimumFare, setMinimumFare] = useState<number>(150);
+  const [cityFlatFare, setCityFlatFare] = useState<number>(150);
+  const [outsideRatePerKm, setOutsideRatePerKm] = useState<number>(40);
 
   useEffect(() => {
-    if (pricingData) {
-      setBaseFare(pricingData.baseFare);
-      setPerKmRate(pricingData.perKmRate);
-      setMinimumFare(pricingData.minimumFare);
+    if (pricingRes) {
+      setCityFlatFare(pricingData.cityFlatFare);
+      setOutsideRatePerKm(pricingData.outsideRatePerKm);
     }
   }, [pricingRes]);
 
   const updatePricingMutation = useMutation({
-    mutationFn: (data: Partial<DriverPricing>) => DriverService.updatePricing(data),
+    mutationFn: (data: { cityFlatFare?: number; outsideRatePerKm?: number }) => DriverService.updatePricing(data),
     onSuccess: () => {
       toast.success('Grille tarifaire mise à jour avec succès !');
       queryClient.invalidateQueries({ queryKey: ['driverPricingSettings'] });
@@ -48,15 +43,14 @@ export default function DriverPricingPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (baseFare <= 0 || perKmRate <= 0 || minimumFare <= 0) {
+    if (cityFlatFare <= 0 || outsideRatePerKm <= 0) {
       toast.error('Les montants doivent être supérieurs à 0 DA.');
       return;
     }
 
     updatePricingMutation.mutate({
-      baseFare,
-      perKmRate,
-      minimumFare,
+      cityFlatFare,
+      outsideRatePerKm,
     });
   };
 
@@ -96,8 +90,8 @@ export default function DriverPricingPage() {
                   <input
                     type="number"
                     min="1"
-                    value={baseFare}
-                    onChange={(e) => setBaseFare(Number(e.target.value))}
+                    value={cityFlatFare}
+                    onChange={(e) => setCityFlatFare(Number(e.target.value))}
                     className="w-full text-xs p-3 pr-12 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
                     required
                   />
@@ -115,32 +109,14 @@ export default function DriverPricingPage() {
                   <input
                     type="number"
                     min="1"
-                    value={perKmRate}
-                    onChange={(e) => setPerKmRate(Number(e.target.value))}
+                    value={outsideRatePerKm}
+                    onChange={(e) => setOutsideRatePerKm(Number(e.target.value))}
                     className="w-full text-xs p-3 pr-12 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
                     required
                   />
                   <span className="absolute right-3.5 top-3 text-xs font-bold text-[#888]">DA / km</span>
                 </div>
                 <p className="text-[10px] text-[#888] font-medium">Calculé automatiquement selon la distance GPS.</p>
-              </div>
-
-              {/* Minimum fare */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">
-                  Tarif Minimum par Course
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    value={minimumFare}
-                    onChange={(e) => setMinimumFare(Number(e.target.value))}
-                    className="w-full text-xs p-3 pr-12 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
-                    required
-                  />
-                  <span className="absolute right-3.5 top-3 text-xs font-bold text-[#888]">DA</span>
-                </div>
               </div>
             </div>
 
