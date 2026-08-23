@@ -1,53 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
-import type { DriverPricing } from '@/services/driver.service';
-import { DollarSign, Save, Loader2, Info } from 'lucide-react';
+import { Save, Loader2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function DriverPricingPage() {
   const queryClient = useQueryClient();
 
+  const [cityFlatFare, setCityFlatFare] = useState<number>(300);
+  const [outsideRatePerKm, setOutsideRatePerKm] = useState<number>(45);
+
   const { data: pricingRes, isLoading } = useQuery({
-    queryKey: ['driverPricingSettings'],
+    queryKey: ['driverPricing'],
     queryFn: () => DriverService.getPricing(),
   });
 
-  const rawData = pricingRes?.data?.data ?? (pricingRes?.data as any) ?? {};
-  const pricingData: DriverPricing = {
-    cityFlatFare: rawData.cityFlatFare ?? rawData.baseFare ?? 150,
-    outsideRatePerKm: rawData.outsideRatePerKm ?? rawData.perKmRate ?? 40,
-  };
-
-  const [cityFlatFare, setCityFlatFare] = useState<number>(150);
-  const [outsideRatePerKm, setOutsideRatePerKm] = useState<number>(40);
-
   useEffect(() => {
-    if (pricingRes) {
-      setCityFlatFare(pricingData.cityFlatFare);
-      setOutsideRatePerKm(pricingData.outsideRatePerKm);
+    const data = pricingRes?.data?.data ?? pricingRes?.data;
+    if (data) {
+      if (data.cityFlatFare !== undefined) setCityFlatFare(data.cityFlatFare);
+      if (data.outsideRatePerKm !== undefined) setOutsideRatePerKm(data.outsideRatePerKm);
     }
   }, [pricingRes]);
 
   const updatePricingMutation = useMutation({
-    mutationFn: (data: { cityFlatFare?: number; outsideRatePerKm?: number }) => DriverService.updatePricing(data),
+    mutationFn: (data: { cityFlatFare: number; outsideRatePerKm: number }) =>
+      DriverService.updatePricing(data),
     onSuccess: () => {
       toast.success('Grille tarifaire mise à jour avec succès !');
-      queryClient.invalidateQueries({ queryKey: ['driverPricingSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['driverPricing'] });
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || 'Erreur lors de la mise à jour des tarifs.';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Erreur lors de la mise à jour des tarifs.');
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (cityFlatFare <= 0 || outsideRatePerKm <= 0) {
-      toast.error('Les montants doivent être supérieurs à 0 DA.');
-      return;
-    }
-
     updatePricingMutation.mutate({
       cityFlatFare,
       outsideRatePerKm,
@@ -55,35 +44,34 @@ export default function DriverPricingPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
-      {/* Title */}
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
       <div>
-        <h1 className="text-xl font-extrabold text-[#1A1A1A] tracking-tight">
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
           Configuration des Tarifs
         </h1>
-        <p className="text-xs text-[#888] mt-0.5">
+        <p className="text-xs text-slate-500 mt-0.5 font-medium">
           Définissez le tarif urbain forfaitaire et le tarif au kilomètre hors-ville
         </p>
       </div>
 
       {isLoading && (
-        <div className="p-6 bg-white rounded-3xl animate-pulse space-y-4">
-          <div className="h-6 bg-[#F5F5F5] rounded w-1/3" />
-          <div className="h-4 bg-white rounded w-2/3" />
+        <div className="p-6 bg-white rounded-[22px] border border-slate-100 animate-pulse space-y-4">
+          <div className="h-6 bg-slate-100 rounded w-1/3" />
+          <div className="h-4 bg-slate-100 rounded w-2/3" />
         </div>
       )}
 
       {!isLoading && (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="p-6 bg-white rounded-3xl border border-[#FFE0A0] space-y-4 shadow-xs">
-            <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider flex items-center gap-1.5">
-              <DollarSign className="w-4 h-4 text-[#FF9900]" /> Grille Tarifaire (DZD)
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="p-5 bg-white rounded-[22px] border border-slate-100 space-y-4 shadow-sm">
+            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+              Grille Tarifaire (DZD)
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-4">
               {/* Flat city fare */}
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">
+                <label className="text-xs font-bold text-slate-700 block">
                   Tarif Urbain Forfaitaire (BBA ville)
                 </label>
                 <div className="relative">
@@ -92,17 +80,17 @@ export default function DriverPricingPage() {
                     min="1"
                     value={cityFlatFare}
                     onChange={(e) => setCityFlatFare(Number(e.target.value))}
-                    className="w-full text-xs p-3 pr-12 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                    className="w-full text-xs p-3 pr-12 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
                     required
                   />
-                  <span className="absolute right-3.5 top-3 text-xs font-bold text-[#888]">DA</span>
+                  <span className="absolute right-3.5 top-3 text-xs font-bold text-slate-400">DA</span>
                 </div>
-                <p className="text-[10px] text-[#888] font-medium">Prix fixe pour toutes les courses intra-muros.</p>
+                <p className="text-[10px] text-slate-400 font-medium">Prix fixe pour toutes les courses intra-muros.</p>
               </div>
 
               {/* Per km rate */}
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">
+                <label className="text-xs font-bold text-slate-700 block">
                   Tarif Hors-Ville (par km)
                 </label>
                 <div className="relative">
@@ -111,20 +99,20 @@ export default function DriverPricingPage() {
                     min="1"
                     value={outsideRatePerKm}
                     onChange={(e) => setOutsideRatePerKm(Number(e.target.value))}
-                    className="w-full text-xs p-3 pr-12 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                    className="w-full text-xs p-3 pr-16 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
                     required
                   />
-                  <span className="absolute right-3.5 top-3 text-xs font-bold text-[#888]">DA / km</span>
+                  <span className="absolute right-3.5 top-3 text-xs font-bold text-slate-400">DA / km</span>
                 </div>
-                <p className="text-[10px] text-[#888] font-medium">Calculé automatiquement selon la distance GPS.</p>
+                <p className="text-[10px] text-slate-400 font-medium">Calculé automatiquement selon la distance GPS.</p>
               </div>
             </div>
 
             {/* Info notice */}
-            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/60 text-xs text-[#1A1A1A] flex items-start gap-2">
+            <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-100 text-xs text-slate-700 flex items-start gap-2">
               <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#FF9900]" />
-              <span>
-                Le moteur de calcul geofencing ZAXI applique automatiquement le Tarif Urbain si le trajet reste dans Bordj Bou Arréridj, ou le Tarif au Kilomètre si la destination est hors-ville.
+              <span className="font-medium text-[11px]">
+                Le moteur de calcul ZAXI applique automatiquement le Tarif Urbain si le trajet reste dans Bordj Bou Arréridj, ou le Tarif au Kilomètre si la destination est hors-ville.
               </span>
             </div>
           </div>
@@ -132,13 +120,14 @@ export default function DriverPricingPage() {
           <button
             type="submit"
             disabled={updatePricingMutation.isPending}
-            className="w-full py-3.5 bg-[#FF9900] text-black font-bold text-xs rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
           >
             {updatePricingMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                <Save className="w-4 h-4" /> Enregistrer la grille tarifaire
+                <Save className="w-4 h-4" />
+                Enregistrer la grille tarifaire
               </>
             )}
           </button>

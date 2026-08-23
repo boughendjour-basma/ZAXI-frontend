@@ -3,20 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
 import { ScrollText, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export interface AuditLogItem {
+interface AuditLogItem {
   id: string;
   action: string;
-  entityType?: string | null;
-  entityId?: string | null;
+  entityType?: string;
   details?: any;
-  ipAddress?: string | null;
   createdAt: string;
 }
 
 function formatDate(dateStr: string) {
   try {
     return new Intl.DateTimeFormat('fr-FR', {
-      day: 'numeric',
+      day: '2-digit',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
@@ -46,13 +44,12 @@ export default function DriverAuditLogsPage() {
   const pagination = (rawData as any)?.pagination ?? { page: 1, totalPages: 1 };
 
   return (
-    <div className="space-y-5 max-w-5xl mx-auto">
-      {/* Title */}
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
       <div>
-        <h1 className="text-xl font-extrabold text-[#1A1A1A] tracking-tight">
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
           Journal d'Audit Système
         </h1>
-        <p className="text-xs text-[#888] mt-0.5">
+        <p className="text-xs text-slate-500 mt-0.5 font-medium">
           Historique immuable des actions de sécurité et modifications plateforme
         </p>
       </div>
@@ -63,10 +60,10 @@ export default function DriverAuditLogsPage() {
           {[1, 2, 3, 4].map((n) => (
             <div
               key={n}
-              className="p-4 bg-white rounded-2xl border border-[#FFE0A0] animate-pulse space-y-2"
+              className="p-4 bg-white rounded-[22px] border border-slate-100 animate-pulse space-y-2"
             >
-              <div className="h-4 bg-[#F5F5F5] rounded w-1/3" />
-              <div className="h-3 bg-white rounded w-1/2" />
+              <div className="h-4 bg-slate-100 rounded w-1/3" />
+              <div className="h-3 bg-slate-100 rounded w-1/2" />
             </div>
           ))}
         </div>
@@ -74,14 +71,14 @@ export default function DriverAuditLogsPage() {
 
       {/* Error state */}
       {isError && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-center space-y-2">
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
           <p className="text-xs text-rose-700 font-medium">
             Impossible de charger le journal d'audit.
           </p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-xl"
+            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl"
           >
             Réessayer
           </button>
@@ -90,15 +87,15 @@ export default function DriverAuditLogsPage() {
 
       {/* Empty State */}
       {!isLoading && !isError && logs.length === 0 && (
-        <div className="py-12 px-4 text-center bg-white rounded-3xl border border-[#FFE0A0] space-y-3 shadow-xs">
-          <div className="w-14 h-14 rounded-2xl bg-[#FFF3D6] flex items-center justify-center mx-auto text-[#FF9900]">
-            <ScrollText className="w-7 h-7" />
+        <div className="py-12 px-4 text-center bg-white rounded-[22px] border border-slate-100 space-y-3 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto text-[#FF9900]">
+            <ScrollText className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-[#1A1A1A]">
+            <h3 className="text-sm font-extrabold text-slate-900">
               Aucune entrée dans le journal
             </h3>
-            <p className="text-xs text-[#888] mt-1 max-w-xs mx-auto">
+            <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto font-medium">
               Les événements système et actions d'administration apparaîtront ici.
             </p>
           </div>
@@ -112,26 +109,26 @@ export default function DriverAuditLogsPage() {
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="p-4 bg-white rounded-2xl border border-[#FFE0A0] shadow-2xs space-y-2"
+                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-xs space-y-2 text-left"
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#333] font-mono">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-[#FF9900] border border-amber-100 font-mono">
                       {log.action}
                     </span>
                     {log.entityType && (
-                      <span className="text-[10px] text-[#888] font-medium">
+                      <span className="text-[10px] text-slate-400 font-bold">
                         [{log.entityType}]
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-[#888] font-mono">
+                  <span className="text-[10px] text-slate-400 font-mono">
                     {formatDate(log.createdAt)}
                   </span>
                 </div>
 
                 {log.details && (
-                  <pre className="text-[11px] text-[#555] bg-white p-2.5 rounded-xl font-mono overflow-x-auto">
+                  <pre className="text-[11px] text-slate-700 bg-slate-50 p-2.5 rounded-xl font-mono overflow-x-auto border border-slate-100">
                     {typeof log.details === 'object'
                       ? JSON.stringify(log.details, null, 2)
                       : String(log.details)}
@@ -147,17 +144,17 @@ export default function DriverAuditLogsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 rounded-xl border border-[#FFE0A0] disabled:opacity-50 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
               >
                 <ChevronLeft className="w-4 h-4" /> Précédent
               </button>
-              <span className="text-[#888]">
-                Page {page} sur {pagination.totalPages}
+              <span className="text-slate-400 font-bold">
+                Page {page} / {pagination.totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={page >= pagination.totalPages}
-                className="px-3 py-1.5 rounded-xl border border-[#FFE0A0] disabled:opacity-50 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
               >
                 Suivant <ChevronRight className="w-4 h-4" />
               </button>

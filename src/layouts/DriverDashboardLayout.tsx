@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { DriverService } from '@/services/driver.service';
 import {
   LayoutDashboard,
   Car,
@@ -110,6 +112,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function DriverDashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+
+  const { data: profileRes } = useQuery({
+    queryKey: ['driverProfileAvailability'],
+    queryFn: () => DriverService.getProfile(),
+    staleTime: 0,
+  });
+
+  const rawDriver = (profileRes?.data?.data as any)?.driver ?? (profileRes?.data?.data as any) ?? profileRes?.data;
+  const driverIsOnline: boolean = rawDriver?.isOnline === true;
 
   return (
     <div className="min-h-screen flex bg-[#FFFBF0]">
@@ -142,25 +154,35 @@ export function DriverDashboardLayout() {
         )}
       </AnimatePresence>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile top bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white border-b border-[#FFE0A0] shadow-sm lg:hidden">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-2 rounded-xl hover:bg-[#FFF3D6] transition-colors text-[#555]"
-            aria-label="Open navigation"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="ZAXI Driver" className="h-7 w-auto object-contain" />
-            <span className="text-[10px] font-bold text-[#FF9900] uppercase tracking-wider bg-[#FFF3D6] px-1.5 py-0.5 rounded-md">Driver</span>
+      {/* Main content column */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#F8F9FA]">
+        {/* ── App Header — solid orange, curved bottom corners matching client profile ──────────────────── */}
+        <header className="sticky top-0 z-30 bg-[#FF9900] rounded-b-2xl shadow-md border-b border-[#FF8800]">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 max-w-2xl mx-auto">
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 -ml-1 rounded-2xl hover:bg-slate-900/10 transition-colors text-slate-950"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <h1
+                className="text-xl font-black text-slate-950 tracking-normal leading-tight text-left"
+                style={{ fontFamily: "'Libre Bodoni', Georgia, serif" }}
+              >
+                Bienvenue&nbsp;{user?.name || 'Chauffeur'}
+              </h1>
+            </div>
+
+            {/* Spacer */}
+            <div className="flex-1" />
           </div>
-          <div className="w-9" />
         </header>
 
-        <main className="flex-1 overflow-auto p-4 lg:p-8">
+        <main className="flex-1 overflow-auto bg-[#F8F9FA]">
           <Outlet />
         </main>
       </div>

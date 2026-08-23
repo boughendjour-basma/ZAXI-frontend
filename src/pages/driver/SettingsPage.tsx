@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
 import { DriverService } from '@/services/driver.service';
-import { CustomerService } from '@/services/customer.service';
+import { useAuth } from '@/hooks/useAuth';
 import {
   User,
   Car,
-  Lock,
   Key,
+  Lock,
   LogOut,
   Save,
   Loader2,
@@ -16,68 +15,60 @@ import {
 import toast from 'react-hot-toast';
 
 export default function DriverSettingsPage() {
-  const { user: authUser, logout } = useAuth();
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
 
-  // Profile data query
-  const { data: profileRes, isLoading } = useQuery({
-    queryKey: ['driverProfileSettings'],
-    queryFn: () => DriverService.getProfile(),
-  });
-
-  const profile = profileRes?.data?.data?.driver ?? (profileRes?.data as any)?.driver ?? authUser;
-
-  // Form states
   const [name, setName] = useState('');
-  const [vehicleMake, setVehicleMake] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
-  const [vehicleColor, setVehicleColor] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
-
-  useEffect(() => {
-    if (profile) {
-      setName(profile.name || '');
-      setVehicleMake(profile.vehicleMake || '');
-      setVehicleModel(profile.vehicleModel || '');
-      setVehicleColor(profile.vehicleColor || '');
-      setVehiclePlate(profile.vehiclePlate || '');
-    }
-  }, [profile]);
-
-  // Profile update mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: any) => DriverService.updateProfile(data),
-    onSuccess: () => {
-      toast.success('Paramètres du profil chauffeur mis à jour !');
-      queryClient.invalidateQueries({ queryKey: ['driverProfileSettings'] });
-    },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || 'Erreur lors de la mise à jour.';
-      toast.error(msg);
-    },
-  });
-
-  const handleProfileSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateProfileMutation.mutate({
-      name: name.trim() || undefined,
-      vehicleMake: vehicleMake.trim() || undefined,
-      vehicleModel: vehicleModel.trim() || undefined,
-      vehicleColor: vehicleColor.trim() || undefined,
-      vehiclePlate: vehiclePlate.trim() || undefined,
-    });
-  };
+  const [vehicleMake, setVehicleMake] = useState('');
+  const [vehicleColor, setVehicleColor] = useState('');
 
   // Password Modal
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
+  const { data: profileRes, isLoading } = useQuery({
+    queryKey: ['driverProfileSettings'],
+    queryFn: () => DriverService.getProfile(),
+  });
+
+  const rawData = profileRes?.data?.data ?? profileRes?.data;
+  const profile = rawData?.driver ?? rawData;
+
+  useEffect(() => {
+    if (profile) {
+      if (profile.name) setName(profile.name);
+      if (profile.vehicleModel) setVehicleModel(profile.vehicleModel);
+      if (profile.vehiclePlate) setVehiclePlate(profile.vehiclePlate);
+      if (profile.vehicleMake) setVehicleMake(profile.vehicleMake);
+      if (profile.vehicleColor) setVehicleColor(profile.vehicleColor);
+    }
+  }, [profile]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: {
+      name?: string;
+      vehicleModel?: string;
+      vehiclePlate?: string;
+      vehicleMake?: string;
+      vehicleColor?: string;
+    }) => DriverService.updateProfile(data),
+    onSuccess: () => {
+      toast.success('Profil mis à jour avec succès !');
+      queryClient.invalidateQueries({ queryKey: ['driverProfileSettings'] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Erreur lors de la mise à jour.');
+    },
+  });
+
   const changePasswordMutation = useMutation({
     mutationFn: (data: { currentPassword: string; newPassword: string }) =>
-      CustomerService.changePassword(data),
+      DriverService.changePassword(data),
     onSuccess: () => {
-      toast.success('Mot de passe mis à jour avec succès !');
+      toast.success('Mot de passe modifié avec succès !');
       setIsPasswordModalOpen(false);
       setCurrentPassword('');
       setNewPassword('');
@@ -87,6 +78,17 @@ export default function DriverSettingsPage() {
       toast.error(msg);
     },
   });
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate({
+      name: name.trim(),
+      vehicleModel: vehicleModel.trim(),
+      vehiclePlate: vehiclePlate.trim(),
+      vehicleMake: vehicleMake.trim(),
+      vehicleColor: vehicleColor.trim(),
+    });
+  };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,108 +104,112 @@ export default function DriverSettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
       {/* Title */}
       <div>
-        <h1 className="text-xl font-extrabold text-[#1A1A1A] tracking-tight">
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
           Paramètres du Chauffeur
         </h1>
-        <p className="text-xs text-[#888] mt-0.5">
+        <p className="text-xs text-slate-500 mt-0.5 font-medium">
           Gérez votre profil public, votre véhicule et la sécurité du compte
         </p>
       </div>
 
       {isLoading && (
-        <div className="p-6 bg-white rounded-3xl animate-pulse space-y-4">
-          <div className="h-6 bg-[#F5F5F5] rounded w-1/3" />
-          <div className="h-4 bg-white rounded w-2/3" />
+        <div className="p-5 bg-white rounded-[22px] border border-slate-100 animate-pulse space-y-4">
+          <div className="h-6 bg-slate-100 rounded w-1/3" />
+          <div className="h-4 bg-slate-100 rounded w-2/3" />
         </div>
       )}
 
       {!isLoading && (
-        <form onSubmit={handleProfileSubmit} className="space-y-6">
+        <form onSubmit={handleProfileSubmit} className="space-y-4">
           {/* Personal Info Card */}
-          <div className="p-6 bg-white rounded-3xl border border-[#FFE0A0] space-y-4 shadow-xs">
-            <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider flex items-center gap-1.5">
-              <User className="w-4 h-4 text-[#FF9900]" /> Profil du chauffeur
+          <div className="p-5 bg-white rounded-[22px] border border-slate-100 space-y-3.5 shadow-sm">
+            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#FF9900]" /> Profil du chauffeur
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Nom complet</label>
+                <label className="text-xs font-bold text-slate-700 block">Nom complet</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                  className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888] flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
                   <span>Numéro de téléphone</span>
-                  <Lock className="w-3 h-3 text-[#888]" />
+                  <Lock className="w-3 h-3 text-slate-400" />
                 </label>
                 <input
                   type="text"
                   value={`+213 ${profile?.phone ?? ''}`}
                   disabled
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#888] cursor-not-allowed font-medium"
+                  className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-100 text-slate-400 cursor-not-allowed font-bold"
                 />
               </div>
             </div>
           </div>
 
           {/* Vehicle Info Card */}
-          <div className="p-6 bg-white rounded-3xl border border-[#FFE0A0] space-y-4 shadow-xs">
-            <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider flex items-center gap-1.5">
-              <Car className="w-4 h-4 text-[#FF9900]" /> Informations du véhicule
+          <div className="p-5 bg-white rounded-[22px] border border-slate-100 space-y-3.5 shadow-sm">
+            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Car className="w-3.5 h-3.5 text-[#FF9900]" /> Informations du véhicule
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Marque (ex: Volkswagen)</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Volkswagen, Renault..."
-                  value={vehicleMake}
-                  onChange={(e) => setVehicleMake(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
-                />
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">Marque</label>
+                  <input
+                    type="text"
+                    placeholder="Volkswagen..."
+                    value={vehicleMake}
+                    onChange={(e) => setVehicleMake(e.target.value)}
+                    className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">Modèle</label>
+                  <input
+                    type="text"
+                    placeholder="Golf 7..."
+                    value={vehicleModel}
+                    onChange={(e) => setVehicleModel(e.target.value)}
+                    className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Modèle (ex: Golf 7)</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Golf 7, Clio 4..."
-                  value={vehicleModel}
-                  onChange={(e) => setVehicleModel(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">Couleur</label>
+                  <input
+                    type="text"
+                    placeholder="Gris..."
+                    value={vehicleColor}
+                    onChange={(e) => setVehicleColor(e.target.value)}
+                    className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Couleur du véhicule</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Noir, Blanc, Gris..."
-                  value={vehicleColor}
-                  onChange={(e) => setVehicleColor(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Matricule / Immatriculation</label>
-                <input
-                  type="text"
-                  placeholder="Ex: 029954-112-34"
-                  value={vehiclePlate}
-                  onChange={(e) => setVehiclePlate(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
-                />
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">Matricule</label>
+                  <input
+                    type="text"
+                    placeholder="029954-112-34"
+                    value={vehiclePlate}
+                    onChange={(e) => setVehiclePlate(e.target.value)}
+                    className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -212,7 +218,7 @@ export default function DriverSettingsPage() {
           <button
             type="submit"
             disabled={updateProfileMutation.isPending}
-            className="w-full py-3.5 bg-[#FF9900] text-black font-bold text-xs rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
           >
             {updateProfileMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -226,67 +232,73 @@ export default function DriverSettingsPage() {
       )}
 
       {/* Account Security Card */}
-      <div className="p-6 bg-white rounded-3xl border border-[#FFE0A0] space-y-4 shadow-xs">
-        <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider flex items-center gap-1.5">
-          <Key className="w-4 h-4 text-[#FF9900]" /> Sécurité et Compte
+      <div className="p-5 bg-white rounded-[22px] border border-slate-100 space-y-3.5 shadow-sm">
+        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <Key className="w-3.5 h-3.5 text-[#FF9900]" /> Sécurité et Compte
         </h3>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-[#F5F5F5] text-[#1A1A1A] font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-2"
+            className="py-3 px-3 bg-slate-50 hover:bg-slate-100 text-slate-900 font-extrabold text-xs rounded-2xl border border-slate-100 flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Key className="w-4 h-4 text-[#FF9900]" /> Changer de mot de passe
+            <Key className="w-3.5 h-3.5 text-[#FF9900]" /> Mot de passe
           </button>
 
           <button
             onClick={() => logout()}
-            className="w-full sm:w-auto px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-2"
+            className="py-3 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold text-xs rounded-2xl border border-rose-100 flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <LogOut className="w-4 h-4" /> Se déconnecter
+            <LogOut className="w-3.5 h-3.5" /> Déconnexion
           </button>
         </div>
       </div>
 
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl p-5 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#FFE0A0] pb-3">
-              <h3 className="text-base font-extrabold text-[#1A1A1A]">
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setIsPasswordModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white rounded-[24px] p-5 space-y-4 shadow-2xl border border-slate-100 text-left"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900">
                 Modifier le mot de passe
               </h3>
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="p-2 rounded-full bg-white text-[#888]"
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handlePasswordSubmit} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">
+                <label className="text-xs font-bold text-slate-700 block">
                   Mot de passe actuel
                 </label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                  className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">
+                <label className="text-xs font-bold text-slate-700 block">
                   Nouveau mot de passe
                 </label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                  className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
                   placeholder="Minimum 8 caractères"
                   required
                 />
@@ -295,7 +307,7 @@ export default function DriverSettingsPage() {
               <button
                 type="submit"
                 disabled={changePasswordMutation.isPending}
-                className="w-full py-3 bg-[#FF9900] text-black font-bold text-xs rounded-2xl shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 {changePasswordMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

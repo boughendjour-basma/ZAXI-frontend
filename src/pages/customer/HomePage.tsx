@@ -4,7 +4,20 @@ import { DriverService } from '@/services/driver.service';
 import { BookingService } from '@/services/booking.service';
 import { CustomerBookingCard } from '@/components/customer/CustomerBookingCard';
 import { RideTrackingScreen } from '@/components/customer/RideTrackingScreen';
-import { Home as HomeIcon, Calendar, X, Car } from 'lucide-react';
+import {
+  Home as HomeIcon,
+  Calendar,
+  X,
+  Car,
+  ShieldCheck,
+  Star,
+  CheckCircle2,
+  Sparkles,
+  ArrowRight,
+  Clock,
+  MapPin,
+  Tag,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import car1Url from '@/assets/car_1.jpg';
@@ -13,16 +26,15 @@ import car2Url from '@/assets/car_2.jpg';
 export default function CustomerHomePage() {
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'current' | 'scheduled' | 'offers'>('current');
+  const [activeTab, setActiveTab] = useState<'main' | 'finished' | 'scheduled' | 'offers'>('main');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-
   const [showTrackingMap, setShowTrackingMap] = useState(true);
 
   // ── Driver public profile ──────────────────────────────────────────────────
   const { data: driverProfileRes } = useQuery({
     queryKey: ['publicDriverProfile'],
     queryFn: () => DriverService.getPublicProfile(),
-    refetchInterval: 30_000, // refresh availability every 30s
+    refetchInterval: 30_000,
   });
 
   const rawDriver = driverProfileRes?.data?.data?.driver ?? (driverProfileRes?.data as any);
@@ -31,6 +43,8 @@ export default function CustomerHomePage() {
     vehicleModel: 'Golf 7',
     vehiclePlate: '029954-112-34',
     phoneNumber: '0555123456',
+    rating: 4.98,
+    totalRides: 420,
   };
 
   // ── Customer bookings (poll every 5s for status updates) ──────────────────
@@ -65,7 +79,12 @@ export default function CustomerHomePage() {
     (b) => b.status !== 'COMPLETED' && b.status !== 'CANCELLED',
   );
 
-  // ── Cancel mutation (used only in the "PENDING" state card, not tracking screen) ──
+  const completedBookings = bookings.filter((b) => b.status === 'COMPLETED');
+  const scheduledBookings = bookings.filter(
+    (b) => b.scheduledAt && new Date(b.scheduledAt) > new Date(),
+  );
+
+  // ── Cancel mutation ────────────────────────────────────────────────────────
   const cancelBookingMutation = useMutation({
     mutationFn: (id: string) => BookingService.cancelBooking(id),
     onSuccess: () => {
@@ -78,7 +97,7 @@ export default function CustomerHomePage() {
     },
   });
 
-  // ── When driver has accepted or ride is in progress: show tracking map ────
+  // ── Active Ride Tracking Screen ───────────────────────────────────────────
   if (
     activeBooking &&
     (activeBooking.status === 'ACCEPTED' || activeBooking.status === 'IN_PROGRESS') &&
@@ -88,8 +107,8 @@ export default function CustomerHomePage() {
       <RideTrackingScreen
         booking={activeBooking}
         driverName={driver.driverName ?? driver.name ?? 'Chauffeur'}
-        driverVehicle={driver.vehicleModel ?? 'Véhicule'}
-        driverPlate={driver.vehiclePlate ?? '—'}
+        driverVehicle={driver.vehicleModel ?? 'Golf 7'}
+        driverPlate={driver.vehiclePlate ?? '029954-112-34'}
         driverPhone={driver.phoneNumber ?? driver.phone ?? ''}
         onBackToHome={() => setShowTrackingMap(false)}
       />
@@ -97,421 +116,383 @@ export default function CustomerHomePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white relative">
-      <div className="flex-1 flex flex-col">
+    <div
+      className="min-h-screen pb-10"
+      style={{ backgroundColor: '#FFF8F0' }}
+    >
+      <div className="px-5 pt-7 pb-8 max-w-lg mx-auto">
 
-        {/* Active Booking Floating Banner when tracking is minimized */}
-        {activeBooking && (activeBooking.status === 'ACCEPTED' || activeBooking.status === 'IN_PROGRESS') && (
-          <div
-            onClick={() => setShowTrackingMap(true)}
-            className="mx-5 mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs flex items-center justify-between cursor-pointer shadow-lg animate-pulse"
-          >
-            <div className="flex items-center gap-2">
-              <Car className="h-5 w-5" />
-              <span>Course en cours — Voir la carte de suivi</span>
-            </div>
-            <span>Afficher ➔</span>
-          </div>
-        )}
-
-        {/* ── Tab Row ───────────────────────────────────────────────────────── */}
+      {/* Floating Active Ride Banner */}
+      {activeBooking && (activeBooking.status === 'ACCEPTED' || activeBooking.status === 'IN_PROGRESS') && (
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 16px',
-            borderBottom: '1px solid #f1f1f1',
-            overflowX: 'auto',
-          }}
+          onClick={() => setShowTrackingMap(true)}
+          className="mb-4 p-4 rounded-2xl bg-[#FF9900] text-slate-950 font-bold text-xs flex items-center justify-between cursor-pointer shadow-md hover:opacity-95 transition-all group"
         >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm">
+              <Car className="h-5 w-5 text-slate-900" />
+            </div>
+            <div>
+              <p className="text-slate-900 font-black text-sm">Course en cours</p>
+              <p className="text-slate-800 text-[11px] font-medium">Touchez pour ouvrir la carte de suivi en direct</p>
+            </div>
+          </div>
+          <span className="bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+            Afficher <ArrowRight className="h-3.5 w-3.5 inline" />
+          </span>
+        </div>
+      )}
+
+      {/* PENDING booking: status card */}
+      {activeBooking && activeBooking.status === 'PENDING' ? (
+        <div className="bg-white rounded-3xl border border-amber-200/70 p-5 shadow-lg shadow-amber-500/5 mb-6 text-left space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+              </span>
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                En attente de confirmation
+              </span>
+            </div>
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+              En attente
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2 text-xs text-slate-700">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
+              <span><strong>Départ:</strong> {activeBooking.pickupAddress || 'Position Actuelle'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-slate-900 shrink-0" />
+              <span><strong>Destination:</strong> {activeBooking.destinationAddress || activeBooking.dropoffAddress || 'Non spécifiée'}</span>
+            </div>
+            <div className="pt-2 border-t border-amber-200/50 flex justify-between items-center font-bold text-slate-900">
+              <span>Tarif estimé</span>
+              <span className="text-amber-600 text-sm">{activeBooking.estimatedPrice || 150} DA</span>
+            </div>
+          </div>
+
           <button
             type="button"
-            onClick={() => {
-              setShowTrackingMap(false);
-              setActiveTab('current');
-            }}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-            title="Retour à l'accueil"
+            onClick={() => cancelBookingMutation.mutate(activeBooking.id)}
+            disabled={cancelBookingMutation.isPending}
+            className="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-2xl font-bold text-xs tracking-wider transition-all disabled:opacity-50"
           >
-            <HomeIcon className="h-6 w-6" style={{ fill: '#FF9900', color: '#FF9900' }} />
-          </button>
-          <button
-            onClick={() => setActiveTab('current')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: activeTab === 'current' ? '1.5px solid #333' : '1.5px solid #ccc',
-              backgroundColor: activeTab === 'current' ? '#1A1A1A' : 'transparent',
-              color: activeTab === 'current' ? '#fff' : '#888',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              transition: 'all 0.2s',
-            }}
-          >
-            Réservations
-          </button>
-          <button
-            onClick={() => setActiveTab('scheduled')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: activeTab === 'scheduled' ? '1.5px solid #333' : '1.5px solid #ccc',
-              backgroundColor: activeTab === 'scheduled' ? '#1A1A1A' : 'transparent',
-              color: activeTab === 'scheduled' ? '#fff' : '#888',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              transition: 'all 0.2s',
-            }}
-          >
-            Programmées
-          </button>
-          <button
-            onClick={() => setActiveTab('offers')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: activeTab === 'offers' ? '1.5px solid #FF9900' : '1.5px solid #ccc',
-              backgroundColor: activeTab === 'offers' ? '#FF9900' : 'transparent',
-              color: activeTab === 'offers' ? '#000' : '#888',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              transition: 'all 0.2s',
-            }}
-          >
-            🎯 Nos offres
+            Annuler la réservation
           </button>
         </div>
+      ) : null}
 
-        {/* ── Main Content Area ─────────────────────────────────────────────── */}
-        <div style={{ flex: 1, padding: '16px 20px' }}>
+      {/* ── 1. Action Tabs Row (Home icon + Reservations finis + Reservations programmes) ── */}
+      <div className="flex items-center gap-2.5 my-4 overflow-x-auto pb-1 scrollbar-none">
+        {/* Home Button */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('main')}
+          className={`p-2.5 rounded-2xl transition-all flex items-center justify-center shrink-0 ${
+            activeTab === 'main'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-400 hover:text-amber-500 border border-slate-200/80 hover:border-amber-300'
+          }`}
+          title="Accueil"
+        >
+          <HomeIcon className="h-5 w-5 fill-current" />
+        </button>
 
-          {/* PENDING booking: show a waiting card (not the full map yet) */}
-          {activeBooking && activeBooking.status === 'PENDING' ? (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-lg text-left space-y-6 mt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-zaxi-orange animate-ping" />
-                  <span className="text-xs font-bold text-[#888] uppercase tracking-wider">
-                    En attente de confirmation…
-                  </span>
-                </div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FFF3D6] text-amber-700">
-                  En attente
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center gap-1.5 mt-1 shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-zaxi-orange" />
-                    <div className="w-[1px] h-8 bg-[#F5F5F5] border-dashed" />
-                    <div className="w-2 h-2 rounded-full bg-black" />
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-[9px] font-bold text-[#888] uppercase tracking-widest">Départ</p>
-                      <p className="text-sm font-semibold text-[#1A1A1A]">
-                        {activeBooking.pickupAddress || 'Position Actuelle'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold text-[#888] uppercase tracking-widest">Destination</p>
-                      <p className="text-sm font-semibold text-[#1A1A1A]">
-                        {activeBooking.dropoffAddress || activeBooking.destinationAddress || 'Destination non spécifiée'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-[#FFE0A0] flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] font-bold text-[#888] uppercase tracking-wider">Tarif Estimé</p>
-                  <p className="text-lg font-black text-[#1A1A1A]">
-                    {activeBooking.estimatedPrice || 150} DA
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] font-bold text-[#888] uppercase tracking-wider">Chauffeur</p>
-                  <p className="text-sm font-bold text-[#1A1A1A]">{driver.driverName ?? driver.name}</p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => cancelBookingMutation.mutate(activeBooking.id)}
-                disabled={cancelBookingMutation.isPending}
-                className="w-full bg-neutral-900 text-white hover:bg-black py-3 rounded-full font-bold text-xs tracking-wider transition-all mt-4 cursor-pointer disabled:opacity-50"
-              >
-                Annuler la réservation
-              </button>
-            </div>
-
-          ) : activeTab === 'current' ? (
-            /* ── Standard Home View ─── */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-              {/* Driver Info Card */}
-              <div
-                style={{
-                  border: '2.5px solid #FF9900',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  backgroundColor: '#fff',
-                  textAlign: 'left',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: '20px',
-                    fontWeight: 800,
-                    color: '#111',
-                    margin: '0 0 12px 0',
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {driver.driverName ?? driver.name}
-                </h3>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    color: '#444',
-                    lineHeight: 1.7,
-                    fontWeight: 500,
-                  }}
-                >
-                  <p style={{ margin: '0 0 8px 0' }}>
-                    Votre chauffeur privé à Bordj Bou Arréridj
-                    <br />
-                    pour tous vos déplacements :
-                  </p>
-                  <ul style={{ margin: '0 0 10px 0', paddingLeft: '20px', listStyleType: 'disc' }}>
-                    <li>courses en ville</li>
-                    <li>transferts aéroport</li>
-                    <li>trajets inter-wilayas</li>
-                    <li>excursions vers les plages</li>
-                    <li>les sites touristiques.</li>
-                  </ul>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '11px',
-                      color: '#666',
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    Profitez d'un service personnalisé avec mise à
-                    <br />
-                    disposition à la journée
-                    <br />
-                    pour vous accompagner et assurer votre retour
-                    <br />
-                    en toute sérénité
-                  </p>
-                </div>
-
-                {/* Car images */}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
-                  <img
-                    src={car2Url}
-                    alt="Voiture vue arrière"
-                    style={{ width: '50%', height: '110px', objectFit: 'cover', borderRadius: '12px' }}
-                  />
-                  <img
-                    src={car1Url}
-                    alt="Voiture vue avant"
-                    style={{ width: '50%', height: '110px', objectFit: 'cover', borderRadius: '12px' }}
-                  />
-                </div>
-              </div>
-
-              {/* Réserver maintenant button → opens booking modal */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <button
-                  onClick={() => setIsBookingModalOpen(true)}
-                  style={{
-                    backgroundColor: '#FF9900',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '30px',
-                    padding: '14px 40px',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    letterSpacing: '0.5px',
-                    minWidth: '240px',
-                  }}
-                >
-                  Reserver maintenant
-                </button>
-              </div>
-            </div>
-
-          ) : activeTab === 'scheduled' ? (
-            /* ── Reservations Programmees ─── */
-            <div className="space-y-4 py-4">
-              <div className="bg-white rounded-2xl border border-[#FFE0A0] p-8 shadow-sm text-center space-y-2 mt-4">
-                <Calendar className="h-10 w-10 text-[#AAA] mx-auto stroke-1" />
-                <h4 className="text-sm font-bold text-[#1A1A1A]">Aucune réservation programmée</h4>
-                <p className="text-xs text-[#888]">Vos courses à venir apparaîtront ici.</p>
-              </div>
-            </div>
-
-          ) : (
-            /* ── Nos Offres — Driver Announcements ─── */
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-base font-extrabold text-[#1A1A1A]">Offres du chauffeur</span>
-                <span className="text-[10px] font-bold text-[#FF9900] bg-[#FFF3D6] px-2 py-0.5 rounded-full border border-[#FFE0A0]">
-                  {announcements.length} offre{announcements.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-
-              {announcements.length > 0 ? (
-                announcements.map((ann: any) => {
-                  const categoryLabels: Record<string, { label: string; emoji: string }> = {
-                    AIRPORT: { label: 'Aéroport', emoji: '✈️' },
-                    BEACH: { label: 'Plage', emoji: '🏖️' },
-                    TOUR: { label: 'Circuit', emoji: '🗺️' },
-                    SPECIAL_OFFER: { label: 'Offre Spéciale', emoji: '🎁' },
-                    OTHER: { label: 'Autre', emoji: '📌' },
-                  };
-                  const cat = categoryLabels[ann.category] ?? { label: ann.category || 'Offre', emoji: '📌' };
-
-                  return (
-                    <div
-                      key={ann.id}
-                      className="bg-white rounded-3xl border border-[#FFE0A0] shadow-sm text-left overflow-hidden"
-                      style={{ borderLeft: '4px solid #FF9900' }}
-                    >
-                      {/* Card header */}
-                      <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-base">{cat.emoji}</span>
-                            <span
-                              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
-                              style={{ backgroundColor: '#FFF3D6', color: '#CC7A00', border: '1px solid #FFE0A0' }}
-                            >
-                              {cat.label}
-                            </span>
-                          </div>
-                          <h4 className="text-sm font-extrabold text-[#1A1A1A] leading-tight">
-                            {ann.title}
-                          </h4>
-                        </div>
-                        {ann.price != null && (
-                          <div className="shrink-0 text-right">
-                            <p className="text-xl font-black text-[#FF9900] leading-tight">
-                              {ann.price.toLocaleString('fr-DZ')}
-                            </p>
-                            <p className="text-[10px] text-[#888] font-semibold">DA</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Description */}
-                      <div className="px-5 pb-4">
-                        <p className="text-xs text-[#555] leading-relaxed">
-                          {ann.description || ann.content}
-                        </p>
-                      </div>
-
-                      {/* Route info if available */}
-                      {(ann.departureLocation || ann.destinationLocation) && (
-                        <div
-                          className="mx-5 mb-4 px-4 py-3 rounded-2xl flex items-center gap-3 text-xs font-medium text-[#444]"
-                          style={{ backgroundColor: '#FFFBF0', border: '1px solid #FFE0A0' }}
-                        >
-                          {ann.departureLocation && (
-                            <span className="flex items-center gap-1">
-                              <span className="w-2 h-2 rounded-full bg-[#FF9900] inline-block" />
-                              {ann.departureLocation}
-                            </span>
-                          )}
-                          {ann.departureLocation && ann.destinationLocation && (
-                            <span className="text-[#ccc]">→</span>
-                          )}
-                          {ann.destinationLocation && (
-                            <span className="flex items-center gap-1">
-                              <span className="w-2 h-2 rounded-full bg-[#1A1A1A] inline-block" />
-                              {ann.destinationLocation}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* CTA */}
-                      <div
-                        className="px-5 pb-5"
-                      >
-                        <button
-                          onClick={() => setIsBookingModalOpen(true)}
-                          className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider transition-all"
-                          style={{
-                            backgroundColor: '#1A1A1A',
-                            color: '#fff',
-                            border: 'none',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Réserver maintenant
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="bg-white rounded-2xl border border-[#FFE0A0] p-10 shadow-sm text-center space-y-3 mt-4">
-                  <span className="text-4xl">🎯</span>
-                  <h4 className="text-sm font-bold text-[#1A1A1A]">Aucune offre disponible</h4>
-                  <p className="text-xs text-[#888]">
-                    Le chauffeur publiera bientôt des offres spéciales : aéroport, plage, circuits…
-                  </p>
-                </div>
-              )}
-            </div>
+        {/* Button: Reservations finis */}
+        <button
+          type="button"
+          onClick={() => setActiveTab(activeTab === 'finished' ? 'main' : 'finished')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'finished'
+              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+          }`}
+        >
+          <Clock className="h-3.5 w-3.5 opacity-80" />
+          <span>Reservations finis</span>
+          {completedBookings.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
+              {completedBookings.length}
+            </span>
           )}
-        </div>
+        </button>
+
+        {/* Button: Reservations programmes */}
+        <button
+          type="button"
+          onClick={() => setActiveTab(activeTab === 'scheduled' ? 'main' : 'scheduled')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'scheduled'
+              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+          }`}
+        >
+          <Calendar className="h-3.5 w-3.5 opacity-80" />
+          <span>Reservations programmes</span>
+          {scheduledBookings.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
+              {scheduledBookings.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* ── Decorative Bottom Footer ──────────────────────────────────────────── */}
-      <div
-        style={{
-          height: '32px',
-          flexShrink: 0,
-        }}
-      />
+      {/* ── Finished Reservations Tab Content ── */}
+      {activeTab === 'finished' && (
+        <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-left shadow-sm space-y-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            Réservations terminées
+          </h3>
+          {completedBookings.length > 0 ? (
+            completedBookings.map((b) => (
+              <div
+                key={b.id}
+                className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3 text-xs"
+              >
+                <div>
+                  <p className="font-bold text-slate-900">{b.destinationAddress || 'Course en ville'}</p>
+                  <p className="text-[#666] text-[11px] mt-0.5">{b.pickupAddress}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-extrabold text-amber-600">{b.estimatedPrice} DA</p>
+                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Terminée
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-slate-500 italic py-3 text-center">
+              Aucune réservation terminée pour le moment.
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* ── Booking Modal Drawer ──────────────────────────────────────────────── */}
-      {isBookingModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center transition-all duration-300">
-          <div className="bg-white w-full max-w-md rounded-t-[40px] px-6 pt-6 pb-10 shadow-2xl relative text-left" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-            {/* Close button */}
+      {/* ── Scheduled Reservations Tab Content ── */}
+      {activeTab === 'scheduled' && (
+        <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-left shadow-sm space-y-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-amber-500" />
+            Réservations programmées
+          </h3>
+          {scheduledBookings.length > 0 ? (
+            scheduledBookings.map((b) => (
+              <div
+                key={b.id}
+                className="p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 flex items-center justify-between gap-3 text-xs"
+              >
+                <div>
+                  <p className="font-bold text-slate-900">{b.destinationAddress || 'Course programmée'}</p>
+                  <p className="text-slate-500 text-[11px] mt-0.5">
+                    Prévue le: {new Date(b.scheduledAt).toLocaleString('fr-FR')}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-xl">
+                  Programmée
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-slate-500 italic py-3 text-center">
+              Aucune réservation programmée à venir.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Driver Info & Main Cards (Only shown on main view) ── */}
+      {(activeTab === 'main' || activeTab === 'offers') && (
+        <>
+          {/* ── 2. Driver Header & Title Card ── */}
+          <div className="text-left mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                {driver.driverName || 'Zakaria boukejar'}
+              </h2>
+              <ShieldCheck className="h-5 w-5 text-amber-500 inline shrink-0" />
+            </div>
+            <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+              Chauffeur privé VTC certifié • Bordj Bou Arréridj
+            </p>
+          </div>
+
+          {/* ── 3. Main Info Card (Orange Border Frame) ── */}
+          <div className="bg-white rounded-3xl border-2 border-amber-500 shadow-xl shadow-amber-500/5 text-left overflow-hidden">
+            
+            {/* Content Section */}
+            <div className="p-5 sm:p-6 space-y-4 text-slate-800 text-sm leading-relaxed">
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900 text-base">
+                  Votre chauffeur privé à Bordj Bou Arréridj
+                </p>
+                <p className="text-xs text-slate-600 font-medium">
+                  Pour tous vos déplacements locaux et longues distances :
+                </p>
+              </div>
+
+              <ul className="space-y-2.5 text-xs text-slate-700 font-medium pl-1">
+                {[
+                  'courses en ville',
+                  'transferts aéroport',
+                  'trajets inter-wilayas',
+                  'excursions vers les plages',
+                  'les sites touristiques.',
+                ].map((service, idx) => (
+                  <li key={idx} className="flex items-center gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0" />
+                    <span>{service}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-xs text-slate-700 italic space-y-1">
+                <p className="font-semibold text-amber-900 not-italic flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                  Service d'Excellence Personnalisé
+                </p>
+                <p>
+                  Profitez d'un service sur-mesure avec mise à disposition à la journée pour vous accompagner et assurer votre retour en toute sérénité.
+                </p>
+              </div>
+            </div>
+
+            {/* Side-by-Side Vehicle Gallery Photos */}
+            <div className="grid grid-cols-2 gap-0.5 bg-slate-200 relative border-t border-slate-100">
+              <div className="relative group overflow-hidden">
+                <img
+                  src={car2Url}
+                  alt="Golf 7 vue arrière"
+                  className="w-full h-36 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2.5">
+                  <span className="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-white/20">
+                    Golf 7 — Confort VIP
+                  </span>
+                </div>
+              </div>
+
+              <div className="relative group overflow-hidden">
+                <img
+                  src={car1Url}
+                  alt="Golf 7 vue avant"
+                  className="w-full h-36 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2.5">
+                  <span className="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-white/20">
+                    Climatisation & Wifi
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 4. Reserver maintenant CTA Button ── */}
+          <div className="mt-6 mb-8 flex justify-center">
             <button
+              type="button"
+              onClick={() => setIsBookingModalOpen(true)}
+              className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <Car className="h-5 w-5 text-slate-950 group-hover:scale-110 transition-transform" />
+              <span>Reserver maintenant</span>
+              <ArrowRight className="h-4 w-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ── 5. Bottom "Nos offres" Section (Only shown on main or offers view) ── */}
+      {(activeTab === 'main' || activeTab === 'offers') && (
+        <div className="relative pt-4 flex flex-col items-center">
+          {/* Floating Badge */}
+          <button
+            type="button"
+            onClick={() => setActiveTab(activeTab === 'offers' ? 'main' : 'offers')}
+            className="z-10 -mb-4 bg-white border-2 border-[#FF9900] text-slate-900 font-extrabold text-sm px-8 py-2.5 rounded-full shadow-md hover:bg-amber-50 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Tag className="h-4 w-4 text-[#FF9900]" />
+            <span>Nos offres</span>
+            {announcements.length > 0 && (
+              <span className="bg-[#FF9900] text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">
+                {announcements.length}
+              </span>
+            )}
+          </button>
+
+          {/* Solid Orange Background Container */}
+          <div className="w-full bg-[#FF9900] rounded-3xl p-6 pt-10 text-left text-slate-950 space-y-4 shadow-lg">
+            {announcements.length > 0 ? (
+              announcements.map((ann: any) => (
+                <div
+                  key={ann.id}
+                  className="bg-white rounded-2xl p-4 shadow-md text-slate-900 border border-amber-100 hover:shadow-lg transition-all space-y-2.5"
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <h4 className="font-bold text-sm text-slate-900 leading-snug">
+                      {ann.title}
+                    </h4>
+                    {ann.price != null && (
+                      <span className="font-black text-amber-600 text-sm whitespace-nowrap bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                        {ann.price.toLocaleString('fr-DZ')} DA
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {ann.description || ann.content}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsBookingModalOpen(true)}
+                    className="w-full bg-slate-900 hover:bg-black text-white rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Réserver cette offre</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-5 text-center text-slate-950 space-y-1.5">
+                <p className="font-bold text-sm">Service de Transport VIP & Excursions</p>
+                <p className="text-xs text-slate-900/80">
+                  Disponibilité 7j/7 pour vos déplacements urbains, transferts aéroport et trajets inter-wilayas.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Booking Modal Drawer ── */}
+      {isBookingModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end justify-center transition-all duration-300">
+          <div className="bg-white w-full max-w-lg rounded-t-[36px] px-6 pt-6 pb-10 shadow-2xl relative text-left" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <button
+              type="button"
               onClick={() => setIsBookingModalOpen(false)}
-              className="absolute top-5 right-5 p-1 rounded-full bg-white text-[#888] hover:text-[#1A1A1A] transition-all cursor-pointer"
+              className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-[#1A1A1A] mb-5 flex items-center gap-2">
-              <Car className="h-5 w-5 text-zaxi-orange" />
-              Réserver votre chauffeur
-            </h3>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+                <Car className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Réserver votre chauffeur VTC
+              </h3>
+            </div>
 
-            {/* CustomerBookingCard handles everything: GPS, autocomplete, booking submit */}
             <CustomerBookingCard
               onBooked={() => {
                 setIsBookingModalOpen(false);
@@ -521,6 +502,7 @@ export default function CustomerHomePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { Home, Clock, Bell, User, LogOut, Menu, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
@@ -23,6 +23,8 @@ export function CustomerLayout() {
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === '/';
 
   // ── Driver availability (poll every 30s) ─────────────────────────────────
   const { data: driverProfileRes } = useQuery({
@@ -156,84 +158,29 @@ export function CustomerLayout() {
       {/* Main content column */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* ── App Header — yellow, curved bottom corners ──────────────────── */}
-        <header
-          className="sticky top-0 z-30"
-          style={{
-            backgroundColor: '#FF9900',
-            borderBottomLeftRadius: '28px',
-            borderBottomRightRadius: '28px',
-            boxShadow: '0 4px 24px rgba(255,153,0,0.25)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '16px 20px 20px 20px',
-            }}
-          >
+        {/* ── App Header — solid orange, curved bottom corners ──────────────────── */}
+        <header className="sticky top-0 z-30 bg-[#FF9900] rounded-b-2xl shadow-md border-b border-[#FF8800]">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 max-w-2xl mx-auto">
             {/* Hamburger — mobile only */}
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 -ml-1 rounded-xl hover:bg-black/10 transition-colors text-black"
+              className="lg:hidden p-2 -ml-1 rounded-2xl hover:bg-slate-900/10 transition-colors text-slate-950"
               aria-label="Open navigation"
             >
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Logo */}
-            <img
-              src={logoUrl}
-              alt="ZAXI"
-              className="h-8 w-auto object-contain"
-              style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))' }}
-            />
+            <div className="flex items-center gap-3">
+              <h1
+                className="text-xl font-black text-slate-950 tracking-normal leading-tight text-left"
+                style={{ fontFamily: "'Libre Bodoni', Georgia, serif" }}
+              >
+                Bienvenue&nbsp;{user?.name || 'Client'}
+              </h1>
+            </div>
 
             {/* Spacer */}
-            <div style={{ flex: 1 }} />
-
-            {/* Availability badge */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: driverIsOnline ? 'rgba(0,0,0,0.13)' : 'rgba(0,0,0,0.08)',
-                borderRadius: '30px',
-                padding: '6px 12px',
-              }}
-            >
-              {/* Dot */}
-              <span style={{ position: 'relative', display: 'inline-flex', width: 9, height: 9, flexShrink: 0 }}>
-                {driverIsOnline && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '50%',
-                      backgroundColor: '#22c55e',
-                      animation: 'ping 1.2s cubic-bezier(0,0,0.2,1) infinite',
-                      opacity: 0.65,
-                    }}
-                  />
-                )}
-                <span
-                  style={{
-                    position: 'relative',
-                    width: 9,
-                    height: 9,
-                    borderRadius: '50%',
-                    backgroundColor: driverIsOnline ? '#22c55e' : '#ef4444',
-                    display: 'inline-block',
-                  }}
-                />
-              </span>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#000', whiteSpace: 'nowrap' }}>
-                {driverIsOnline ? 'Disponible' : 'Indisponible'}
-              </span>
-            </div>
+            <div className="flex-1" />
           </div>
         </header>
 

@@ -2,18 +2,18 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FavoriteService } from '@/services/favorite.service';
 import type { Favorite } from '@/services/favorite.service';
-import { Plus, Trash2, Home, Briefcase, Plane, Star, Loader2, X } from 'lucide-react';
+import { Plus, Trash2, Home, Briefcase, Plane, Star, Loader2, X, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function getFavoriteIcon(name: string) {
   const lower = name.toLowerCase();
   if (lower.includes('maison') || lower.includes('home'))
-    return <Home className="w-4 h-4 text-[#FF9900]" />;
+    return <Home className="w-4 h-4" style={{ color: '#FF9900' }} />;
   if (lower.includes('travail') || lower.includes('bureau') || lower.includes('work'))
-    return <Briefcase className="w-4 h-4 text-blue-600" />;
+    return <Briefcase className="w-4 h-4" style={{ color: '#3B82F6' }} />;
   if (lower.includes('aéroport') || lower.includes('aeroport') || lower.includes('airport'))
-    return <Plane className="w-4 h-4 text-indigo-600" />;
-  return <Star className="w-4 h-4 text-amber-500" />;
+    return <Plane className="w-4 h-4" style={{ color: '#6366F1' }} />;
+  return <Star className="w-4 h-4" style={{ color: '#FF9900' }} />;
 }
 
 export function FavoriteLocationsManager() {
@@ -86,15 +86,19 @@ export function FavoriteLocationsManager() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 text-left">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider">
+        <span
+          className="text-[11px] font-bold uppercase tracking-wider"
+          style={{ color: '#AAA' }}
+        >
           Mes lieux favoris
-        </h3>
+        </span>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center gap-1 text-xs font-bold text-[#FF9900] hover:underline"
+          className="inline-flex items-center gap-1 text-[12px] font-bold cursor-pointer"
+          style={{ color: '#FF9900' }}
         >
           <Plus className="w-3.5 h-3.5" /> Ajouter un lieu
         </button>
@@ -102,44 +106,52 @@ export function FavoriteLocationsManager() {
 
       {/* Loading state */}
       {isLoading && (
-        <div className="p-3 bg-white rounded-2xl animate-pulse space-y-2">
-          <div className="h-4 bg-[#F5F5F5] rounded w-1/3" />
-          <div className="h-3 bg-white rounded w-2/3" />
+        <div
+          className="p-4 rounded-2xl animate-pulse space-y-2"
+          style={{ backgroundColor: '#F5F5F5' }}
+        >
+          <div className="h-4 rounded-xl w-1/3" style={{ backgroundColor: '#E8E8E8' }} />
+          <div className="h-3 rounded-xl w-2/3" style={{ backgroundColor: '#E8E8E8' }} />
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && favorites.length === 0 && (
-        <div className="p-4 bg-white border border-dashed border-[#FFE0A0] rounded-2xl text-center space-y-2">
-          <p className="text-xs text-[#888] font-medium">
+        <div
+          className="py-6 px-4 rounded-2xl text-center space-y-3"
+          style={{ backgroundColor: '#F5F5F5' }}
+        >
+          <MapPin className="w-6 h-6 mx-auto" style={{ color: '#CCC' }} />
+          <p className="text-[12px] font-medium" style={{ color: '#999' }}>
             Aucun lieu favori enregistré (ex: Maison, Travail).
           </p>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-3.5 py-1.5 bg-[#FFF3D6] text-[#FF9900] font-semibold text-xs rounded-xl"
-          >
-            ➕ Ajouter un lieu favori
-          </button>
         </div>
       )}
 
       {/* List Favorites */}
       {!isLoading && favorites.length > 0 && (
-        <div className="grid gap-2">
+        <div className="space-y-2.5">
           {favorites.map((fav) => (
             <div
               key={fav.id}
-              className="p-3 bg-white rounded-2xl border border-[#FFE0A0] flex items-center justify-between shadow-2xs hover:border-teal-500/30 transition-all"
+              className="p-3.5 rounded-2xl flex items-center justify-between"
+              style={{
+                backgroundColor: '#F8F8F8',
+                border: '1px solid #F0F0F0',
+              }}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-white shrink-0">
+                <div
+                  className="p-2.5 rounded-xl shrink-0"
+                  style={{ backgroundColor: '#FFFFFF', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+                >
                   {getFavoriteIcon(fav.name)}
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-[#1A1A1A]">
+                  <div className="text-[13px] font-bold" style={{ color: '#1A1A1A' }}>
                     {fav.name}
                   </div>
-                  <div className="text-[11px] text-[#888] line-clamp-1">
+                  <div className="text-[11px] line-clamp-1" style={{ color: '#999' }}>
                     {fav.address}
                   </div>
                 </div>
@@ -148,7 +160,8 @@ export function FavoriteLocationsManager() {
               <button
                 onClick={() => deleteMutation.mutate(fav.id)}
                 disabled={deleteMutation.isPending}
-                className="p-1.5 rounded-xl hover:bg-rose-50 text-[#888] hover:text-rose-500 transition-colors"
+                className="p-2 rounded-xl transition-colors cursor-pointer"
+                style={{ color: '#CCC' }}
                 title="Supprimer"
               >
                 <Trash2 className="w-4 h-4" />
@@ -160,31 +173,55 @@ export function FavoriteLocationsManager() {
 
       {/* Add Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between border-b border-[#FFE0A0] pb-3">
-              <h3 className="text-base font-extrabold text-[#1A1A1A]">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div
+            className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] p-6 space-y-4 shadow-2xl text-left"
+            style={{
+              backgroundColor: '#FFFFFF',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div
+              className="flex items-center justify-between pb-3"
+              style={{ borderBottom: '1px solid #F0F0F0' }}
+            >
+              <h3
+                className="text-base font-extrabold"
+                style={{ color: '#1A1A1A' }}
+              >
                 Ajouter un lieu favori
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-2 rounded-full bg-white text-[#888]"
+                className="p-2 rounded-full transition-colors"
+                style={{ backgroundColor: '#F5F5F5', color: '#888' }}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddSubmit} className="space-y-3">
+            <form onSubmit={handleAddSubmit} className="space-y-3.5">
               {/* Presets */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Raccourcis</label>
+              <div className="space-y-1.5">
+                <label
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: '#AAA' }}
+                >
+                  Raccourcis
+                </label>
                 <div className="flex items-center gap-2">
                   {['🏠 Maison', '💼 Travail', '✈️ Aéroport'].map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => handlePresetSelect(preset)}
-                      className="px-2.5 py-1 bg-white rounded-lg text-xs font-medium text-[#333] hover:bg-[#FFF3D6] hover:text-[#FF9900]"
+                      className="px-3 py-1.5 rounded-xl text-[12px] font-bold transition-colors"
+                      style={{
+                        backgroundColor: '#F5F5F5',
+                        color: '#555',
+                        border: '1px solid #E8E8E8',
+                      }}
                     >
                       {preset}
                     </button>
@@ -194,26 +231,50 @@ export function FavoriteLocationsManager() {
 
               {/* Name */}
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Nom du lieu</label>
+                <label
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: '#AAA' }}
+                >
+                  Nom du lieu
+                </label>
                 <input
                   type="text"
                   placeholder="Ex: Maison, Bureau..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                  className="w-full text-[13px] p-3.5 rounded-2xl outline-none"
+                  style={{
+                    border: '1px solid #E8E8E8',
+                    backgroundColor: '#FFFFFF',
+                    color: '#1A1A1A',
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = '#FF9900')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = '#E8E8E8')}
                   required
                 />
               </div>
 
               {/* Address */}
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#888]">Adresse / Quartier</label>
+                <label
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: '#AAA' }}
+                >
+                  Adresse / Quartier
+                </label>
                 <input
                   type="text"
                   placeholder="Ex: Centre ville, Bordj Bou Arréridj..."
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#FFE0A0] bg-white text-[#1A1A1A] outline-none focus:border-[#FF9900]"
+                  className="w-full text-[13px] p-3.5 rounded-2xl outline-none"
+                  style={{
+                    border: '1px solid #E8E8E8',
+                    backgroundColor: '#FFFFFF',
+                    color: '#1A1A1A',
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = '#FF9900')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = '#E8E8E8')}
                   required
                 />
               </div>
@@ -221,7 +282,11 @@ export function FavoriteLocationsManager() {
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="w-full py-3 bg-gradient-to-r from-[#FF9900] to-[#FF9900] text-white font-bold text-xs rounded-2xl shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-2xl font-extrabold text-[13px] flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                style={{
+                  backgroundColor: '#FF9900',
+                  color: '#000',
+                }}
               >
                 {createMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

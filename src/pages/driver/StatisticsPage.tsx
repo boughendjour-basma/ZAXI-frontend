@@ -37,7 +37,7 @@ export default function DriverStatisticsPage() {
       : 100;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5">
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
@@ -80,33 +80,24 @@ export default function DriverStatisticsPage() {
         <div className="space-y-6">
           {/* Revenue Overview Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-5 flex items-center justify-between bg-[#FF9900] text-black shadow-lg">
+            <Card className="p-5 bg-[#FF9900] text-black shadow-lg">
               <div>
                 <span className="text-xs text-black/80 font-black uppercase tracking-wider">Recette Totale</span>
                 <h3 className="text-2xl font-black mt-1">{stats.totalRevenue} DA</h3>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-black/10 flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-black" />
-              </div>
             </Card>
 
-            <Card className="p-5 flex items-center justify-between">
+            <Card className="p-5">
               <div>
                 <span className="text-xs text-[#888] font-bold uppercase tracking-wider">Recette du Mois</span>
                 <h3 className="text-2xl font-black text-[#1A1A1A] mt-1">{stats.monthlyRevenue} DA</h3>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-[#FFF3D6] flex items-center justify-center text-[#FF9900]">
-                <TrendingUp className="w-6 h-6" />
-              </div>
             </Card>
 
-            <Card className="p-5 flex items-center justify-between">
+            <Card className="p-5">
               <div>
                 <span className="text-xs text-[#888] font-bold uppercase tracking-wider">Recette du Jour</span>
                 <h3 className="text-2xl font-black text-[#1A1A1A] mt-1">{stats.dailyRevenue} DA</h3>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-[#FFF3D6] flex items-center justify-center text-[#FF9900]">
-                <DollarSign className="w-6 h-6" />
               </div>
             </Card>
           </div>
@@ -114,39 +105,27 @@ export default function DriverStatisticsPage() {
           {/* Operational Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Card className="p-4 space-y-1">
-              <div className="flex items-center gap-1.5 text-[#FF9900]">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase">Courses Réussies</span>
-              </div>
+              <span className="text-xs font-bold uppercase text-[#888] block">Courses Réussies</span>
               <p className="text-2xl font-black text-[#1A1A1A]">{stats.completedRides}</p>
-              <span className="text-[10px] text-[#888] font-medium">Taux de réussite : {completionRate}%</span>
+              <span className="text-[10px] text-[#888] font-medium block">Taux de réussite : {completionRate}%</span>
             </Card>
 
             <Card className="p-4 space-y-1">
-              <div className="flex items-center gap-1.5 text-rose-500">
-                <XCircle className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase">Courses Annulées</span>
-              </div>
+              <span className="text-xs font-bold uppercase text-[#888] block">Courses Annulées</span>
               <p className="text-2xl font-black text-[#1A1A1A]">{stats.cancelledRides}</p>
-              <span className="text-[10px] text-[#888] font-medium">Sur {stats.totalRides} réservations au total</span>
+              <span className="text-[10px] text-[#888] font-medium block">Sur {stats.totalRides} réservations au total</span>
             </Card>
 
             <Card className="p-4 space-y-1">
-              <div className="flex items-center gap-1.5 text-amber-500">
-                <Star className="w-4 h-4 fill-amber-400" />
-                <span className="text-xs font-bold uppercase">Satisfaction Clients</span>
-              </div>
+              <span className="text-xs font-bold uppercase text-[#888] block">Satisfaction Clients</span>
               <p className="text-2xl font-black text-[#1A1A1A]">{stats.averageRating} / 5</p>
-              <span className="text-[10px] text-[#888] font-medium">Basé sur les évaluations clients</span>
+              <span className="text-[10px] text-[#888] font-medium block">Basé sur les évaluations clients</span>
             </Card>
 
             <Card className="p-4 space-y-1">
-              <div className="flex items-center gap-1.5 text-sky-500">
-                <Users className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase">Clients Inscrits</span>
-              </div>
+              <span className="text-xs font-bold uppercase text-[#888] block">Clients Inscrits</span>
               <p className="text-2xl font-black text-[#1A1A1A]">{stats.totalCustomers}</p>
-              <span className="text-[10px] text-[#888] font-medium">{stats.activeCustomers} clients actifs</span>
+              <span className="text-[10px] text-[#888] font-medium block">{stats.activeCustomers} clients actifs</span>
             </Card>
           </div>
         </div>
