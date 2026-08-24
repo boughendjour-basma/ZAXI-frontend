@@ -8,7 +8,6 @@ import {
   Home as HomeIcon,
   Calendar,
   X,
-  Car,
   ShieldCheck,
   Star,
   CheckCircle2,
@@ -401,7 +400,6 @@ export default function CustomerHomePage() {
               onClick={() => setIsBookingModalOpen(true)}
               className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
-              <Car className="h-5 w-5 text-slate-950 group-hover:scale-110 transition-transform" />
               <span>Reserver maintenant</span>
               <ArrowRight className="h-4 w-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
             </button>

@@ -24,7 +24,6 @@ export function CustomerLayout() {
   const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const isHome = location.pathname === '/';
 
   // ── Driver availability (poll every 30s) ─────────────────────────────────
   const { data: driverProfileRes } = useQuery({
@@ -160,27 +159,40 @@ export function CustomerLayout() {
 
         {/* ── App Header — solid orange, curved bottom corners ──────────────────── */}
         <header className="sticky top-0 z-30 bg-[#FF9900] rounded-b-2xl shadow-md border-b border-[#FF8800]">
-          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 max-w-2xl mx-auto">
-            {/* Hamburger — mobile only */}
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 -ml-1 rounded-2xl hover:bg-slate-900/10 transition-colors text-slate-950"
-              aria-label="Open navigation"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+          <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 max-w-2xl mx-auto">
+            {/* Left: Hamburger + Title */}
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Hamburger — mobile only */}
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="lg:hidden p-1.5 -ml-1 rounded-xl hover:bg-black/10 transition-colors text-slate-950 shrink-0"
+                aria-label="Open navigation"
+              >
+                <Menu className="h-6 w-6 text-slate-950" />
+              </button>
 
-            <div className="flex items-center gap-3">
               <h1
-                className="text-xl font-black text-slate-950 tracking-normal leading-tight text-left"
+                className="text-lg sm:text-xl font-black text-slate-950 tracking-normal leading-tight text-left truncate"
                 style={{ fontFamily: "'Libre Bodoni', Georgia, serif" }}
               >
                 Bienvenue&nbsp;{user?.name || 'Client'}
               </h1>
             </div>
 
-            {/* Spacer */}
-            <div className="flex-1" />
+            {/* Right: Availability Status Pill */}
+            <div className="flex items-center shrink-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E57E00]/40 border border-[#E57E00]/20 shadow-xs">
+                <span
+                  className={cn(
+                    'w-2.5 h-2.5 rounded-full shrink-0',
+                    driverIsOnline ? 'bg-[#34C759]' : 'bg-[#FF3B30]'
+                  )}
+                />
+                <span className="text-xs sm:text-[13px] font-bold text-slate-950 tracking-tight select-none">
+                  {driverIsOnline ? 'Disponible' : 'Indisponible'}
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 

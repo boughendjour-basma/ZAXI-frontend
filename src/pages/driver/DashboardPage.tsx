@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { useDriverStore } from '@/store/driverStore';
 import { DriverService } from '@/services/driver.service';
 import { useDriverLocation } from '@/hooks/useDriverLocation';
 import { useSocket } from '@/hooks/useSocket';
@@ -34,17 +35,14 @@ import { Avatar } from '@/components/ui/Avatar';
 import logoUrl from '@/assets/logo.png';
 import toast from 'react-hot-toast';
 
-type RideState = 'waiting' | 'accepted' | 'in_progress' | 'completed';
-
-function deriveRideState(booking: Booking | null): RideState {
-  if (!booking) return 'waiting';
-  switch (booking.status) {
+function deriveRideState(activeBooking: Booking | null) {
+  if (!activeBooking) return 'waiting';
+  switch (activeBooking.status) {
     case 'ACCEPTED':
       return 'accepted';
+    case 'ARRIVED':
     case 'IN_PROGRESS':
       return 'in_progress';
-    case 'COMPLETED':
-      return 'completed';
     default:
       return 'waiting';
   }
@@ -56,7 +54,8 @@ export default function DriverDashboardPage() {
   const queryClient = useQueryClient();
   const { useSocketEvent } = useSocket();
 
-  const [isOnline, setIsOnline] = useState<boolean>(false);
+  const isOnline = useDriverStore((s) => s.isOnline);
+  const setOnlineInStore = useDriverStore((s) => s.setOnline);
 
   // ── Load initial online status from backend ───────────────────────────────
   const { data: profileRes } = useQuery({
@@ -66,16 +65,31 @@ export default function DriverDashboardPage() {
   });
 
   useEffect(() => {
-    const backendIsOnline = (profileRes?.data as any)?.isOnline;
-    if (typeof backendIsOnline === 'boolean') {
-      setIsOnline(backendIsOnline);
+    const rawDriver = (profileRes?.data?.data as any)?.driver ?? (profileRes?.data?.data as any) ?? profileRes?.data;
+    if (rawDriver && typeof rawDriver.isOnline === 'boolean') {
+      setOnlineInStore(rawDriver.isOnline);
     }
-  }, [profileRes]);
+  }, [profileRes, setOnlineInStore]);
 
-  // ── Persist availability to DB ────────────────────────────────────────────
+  // ── Persist availability to DB with optimistic update & rollback ────────
   const availabilityMutation = useMutation({
     mutationFn: (online: boolean) => DriverService.setAvailability(online),
-    onError: () => toast.error('Erreur lors de la mise à jour du statut'),
+    onMutate: async (newOnlineState) => {
+      await queryClient.cancelQueries({ queryKey: ['driverProfileAvailability'] });
+      const previousOnline = isOnline;
+      setOnlineInStore(newOnlineState);
+      return { previousOnline };
+    },
+    onError: (_err, _newOnlineState, context) => {
+      if (context?.previousOnline !== undefined) {
+        setOnlineInStore(context.previousOnline);
+      }
+      toast.error('Erreur lors de la mise à jour du statut. Statut restauré.');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['driverProfileAvailability'] });
+      queryClient.invalidateQueries({ queryKey: ['publicDriverProfile'] });
+    },
   });
 
   const { data: activeBookingRes } = useQuery({
@@ -217,7 +231,6 @@ export default function DriverDashboardPage() {
 
   const toggleAvailability = () => {
     const nextState = !isOnline;
-    setIsOnline(nextState);
     availabilityMutation.mutate(nextState);
     toast(nextState ? '🟢 Vous êtes maintenant EN LIGNE' : '🔴 Vous êtes maintenant HORS LIGNE');
   };
