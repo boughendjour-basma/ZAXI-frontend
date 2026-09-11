@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { NotificationService } from '@/services/notification.service';
 import type { Notification } from '@/services/notification.service';
+import { useTranslation } from '@/store/languageStore';
 import { Bell, CheckCheck, Car, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { cn } from '@/utils/cn';
 
-function formatFrenchDateTime(dateStr: string) {
+function formatLocalizedDateTime(dateStr: string, lang: string) {
   try {
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('fr-FR', {
+    return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',
@@ -27,8 +29,21 @@ function getNotificationIcon(type?: string) {
   return <Bell className="w-5 h-5 text-[#FF9900]" />;
 }
 
+/** Resolve localised title/message from the notification type, with fallback to stored text. */
+function getLocalizedContent(
+  item: { type?: string; title: string; message: string },
+  t: import('@/i18n/translations').Translations
+) {
+  const typeKey = item.type as keyof typeof t.notifications.types | undefined;
+  if (typeKey && t.notifications.types[typeKey]) {
+    return t.notifications.types[typeKey];
+  }
+  return { title: item.title, message: item.message };
+}
+
 export default function CustomerNotificationsPage() {
   const queryClient = useQueryClient();
+  const { t, language, isRTL } = useTranslation();
 
   const { data: res, isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
@@ -57,7 +72,7 @@ export default function CustomerNotificationsPage() {
   const markAllReadMutation = useMutation({
     mutationFn: () => NotificationService.markAllRead(),
     onSuccess: () => {
-      toast.success('Toutes les notifications ont été marquées comme lues.');
+      toast.success(language === 'ar' ? 'تم تحديد جميع الإشعارات كمقروءة.' : 'Toutes les notifications ont été marquées comme lues.');
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
@@ -70,18 +85,16 @@ export default function CustomerNotificationsPage() {
       <div className="px-5 pt-7 pb-8 max-w-lg mx-auto space-y-5">
         {/* Title & Actions */}
         <div className="flex items-center justify-between">
-          <div className="text-left">
+          <div className="text-start">
             <h1
-              className="text-[22px] font-extrabold tracking-tight"
-              style={{ color: '#1A1A1A' }}
+              className="text-[22px] font-extrabold tracking-tight text-slate-900"
             >
-              Notifications
+              {t.notifications.title}
             </h1>
             <p
-              className="text-[13px] mt-0.5"
-              style={{ color: '#999' }}
+              className="text-[13px] mt-0.5 text-slate-500"
             >
-              Mises à jour et alertes de vos trajets
+              {t.notifications.subtitle}
             </p>
           </div>
 
@@ -89,9 +102,9 @@ export default function CustomerNotificationsPage() {
             <button
               onClick={() => markAllReadMutation.mutate()}
               disabled={markAllReadMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
             >
-              <CheckCheck className="w-3.5 h-3.5 text-[#FF9900]" /> Tout lire
+              <CheckCheck className="w-3.5 h-3.5 text-[#FF9900]" /> {t.notifications.markAllRead}
             </button>
           )}
         </div>
@@ -119,13 +132,13 @@ export default function CustomerNotificationsPage() {
         <div className="p-5 rounded-3xl bg-rose-50 border border-rose-200 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
           <p className="text-xs text-rose-700 font-medium">
-            Impossible de charger vos notifications.
+            {t.common.error}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-5 py-2 bg-rose-600 text-white text-xs font-bold rounded-2xl hover:bg-rose-700 transition-colors"
+            className="px-5 py-2 bg-rose-600 text-white text-xs font-bold rounded-2xl hover:bg-rose-700 transition-colors cursor-pointer"
           >
-            Réessayer
+            {t.common.confirm}
           </button>
         </div>
       )}
@@ -138,10 +151,10 @@ export default function CustomerNotificationsPage() {
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900">
-              Toutes vos notifications sont lues
+              {t.notifications.noNotifications}
             </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-              Vous recevrez des alertes lors de vos réservations et suivis de course.
+              {t.notifications.noNotificationsDesc}
             </p>
           </div>
         </div>
@@ -149,7 +162,7 @@ export default function CustomerNotificationsPage() {
 
       {/* Notification List */}
       {!isLoading && !isError && notifications.length > 0 && (
-        <div className="space-y-3 text-left">
+        <div className="space-y-3 text-start">
           {notifications.map((item) => (
             <div
               key={item.id}
@@ -163,14 +176,14 @@ export default function CustomerNotificationsPage() {
               }`}
             >
               {!item.read && (
-                <span className="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-[#FF9900] animate-pulse" />
+                <span className={cn('absolute top-4 w-2.5 h-2.5 rounded-full bg-[#FF9900] animate-pulse', isRTL ? 'left-4' : 'right-4')} />
               )}
 
               <div className="p-2.5 rounded-2xl bg-white border border-slate-100 shadow-xs shrink-0">
                 {getNotificationIcon(item.type)}
               </div>
 
-              <div className="space-y-1 flex-1 pr-4">
+              <div className={cn('space-y-1 flex-1', isRTL ? 'pl-4' : 'pr-4')}>
                 <div className="flex items-center justify-between">
                   <h4
                     className={`text-xs font-extrabold ${
@@ -179,14 +192,14 @@ export default function CustomerNotificationsPage() {
                         : 'text-slate-900'
                     }`}
                   >
-                    {item.title}
+                    {getLocalizedContent(item, t).title}
                   </h4>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  {item.message}
+                  {getLocalizedContent(item, t).message}
                 </p>
                 <span className="text-[10px] text-slate-400 font-semibold block pt-1">
-                  {formatFrenchDateTime(item.createdAt)}
+                  {formatLocalizedDateTime(item.createdAt, language)}
                 </span>
               </div>
             </div>

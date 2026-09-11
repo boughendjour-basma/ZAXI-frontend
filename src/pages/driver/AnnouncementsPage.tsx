@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
+import { useTranslation } from '@/store/languageStore';
+import { useSocket } from '@/hooks/useSocket';
 import {
   Megaphone,
   Plus,
@@ -18,46 +20,64 @@ interface Announcement {
   title: string;
   description?: string;
   category?: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+  price?: number | null;
   createdAt?: string;
 }
 
 export default function DriverAnnouncementsPage() {
   const queryClient = useQueryClient();
+  const { t, language } = useTranslation();
+  const { useSocketEvent } = useSocket();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER'>('OTHER');
+  const [category, setCategory] = useState<'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER'>('SPECIAL_OFFER');
+  const [price, setPrice] = useState('');
+
+  // ── Real-time Socket.IO Listeners ──────────────────────────────────────────
+  useSocketEvent('announcement:new', () => {
+    queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
+  });
+  useSocketEvent('announcement:updated', () => {
+    queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
+  });
+  useSocketEvent('announcement:removed', () => {
+    queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
+  });
 
   const { data: res, isLoading, isError, refetch } = useQuery({
     queryKey: ['driverAnnouncements'],
-    queryFn: () => DriverService.getAnnouncements(),
+    queryFn: () => DriverService.getPublicAnnouncements(),
+    refetchInterval: 5000,
   });
 
-  const rawData = res?.data?.data;
+  const rawData = (res?.data?.data as any) ?? (res?.data as any);
   const announcements: Announcement[] = Array.isArray(rawData)
     ? rawData
-    : Array.isArray((rawData as any)?.announcements)
-    ? (rawData as any).announcements
+    : Array.isArray(rawData?.announcements)
+    ? rawData.announcements
     : [];
 
   const createMutation = useMutation({
     mutationFn: (data: {
       title: string;
       description: string;
-      category?: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+      category: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+      price?: number;
     }) => DriverService.createAnnouncement(data),
     onSuccess: () => {
-      toast.success('Annonce publiée avec succès !');
+      toast.success(language === 'ar' ? 'تم نشر الإعلان بنجاح !' : 'Annonce publiée avec succès !');
       queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
       setIsModalOpen(false);
       setTitle('');
       setDescription('');
+      setPrice('');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Erreur lors de la création de l\'annonce.');
+      toast.error(err.response?.data?.message || (language === 'ar' ? 'حدث خطأ أثناء نشر الإعلان.' : 'Erreur lors de la création de l\'annonce.'));
     },
   });
 
@@ -71,29 +91,31 @@ export default function DriverAnnouncementsPage() {
         title?: string;
         description?: string;
         category?: 'AIRPORT' | 'BEACH' | 'TOUR' | 'SPECIAL_OFFER' | 'OTHER';
+        price?: number;
       };
     }) => DriverService.updateAnnouncement(id, data),
     onSuccess: () => {
-      toast.success('Annonce mise à jour !');
+      toast.success(language === 'ar' ? 'تم تحديث الإعلان بنجاح !' : 'Annonce mise à jour !');
       queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
       setIsModalOpen(false);
       setEditingId(null);
       setTitle('');
       setDescription('');
+      setPrice('');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Erreur lors de la mise à jour.');
+      toast.error(err.response?.data?.message || (language === 'ar' ? 'حدث خطأ أثناء التحديث.' : 'Erreur lors de la mise à jour.'));
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => DriverService.deleteAnnouncement(id),
     onSuccess: () => {
-      toast.success('Annonce supprimée.');
+      toast.success(language === 'ar' ? 'تم حذف الإعلان.' : 'Annonce supprimée.');
       queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+      toast.error(err.response?.data?.message || (language === 'ar' ? 'حدث خطأ أثناء الحذف.' : 'Erreur lors de la suppression.'));
     },
   });
 
@@ -101,7 +123,8 @@ export default function DriverAnnouncementsPage() {
     setEditingId(null);
     setTitle('');
     setDescription('');
-    setCategory('OTHER');
+    setCategory('SPECIAL_OFFER');
+    setPrice('');
     setIsModalOpen(true);
   };
 
@@ -109,16 +132,20 @@ export default function DriverAnnouncementsPage() {
     setEditingId(item.id);
     setTitle(item.title);
     setDescription(item.description || (item as any).content || '');
-    setCategory(item.category || 'OTHER');
+    setCategory(item.category || 'SPECIAL_OFFER');
+    setPrice(item.price != null ? String(item.price) : '');
     setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
-      toast.error('Veuillez remplir le titre et le contenu.');
+      toast.error(language === 'ar' ? 'يرجى إدخال العنوان والمحتوى.' : 'Veuillez remplir le titre et le contenu.');
       return;
     }
+
+    const parsedPrice = price.trim() ? parseInt(price.trim(), 10) : undefined;
+    const finalPrice = parsedPrice && !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : undefined;
 
     if (editingId) {
       updateMutation.mutate({
@@ -127,6 +154,7 @@ export default function DriverAnnouncementsPage() {
           title: title.trim(),
           description: description.trim(),
           category,
+          price: finalPrice,
         },
       });
     } else {
@@ -134,20 +162,21 @@ export default function DriverAnnouncementsPage() {
         title: title.trim(),
         description: description.trim(),
         category,
+        price: finalPrice,
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-start">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            Annonces publiques
+            {t.driver.announcements.title}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 font-medium">
-            Informations et actualités diffusées aux clients ZAXI
+            {t.driver.announcements.subtitle}
           </p>
         </div>
 
@@ -155,7 +184,7 @@ export default function DriverAnnouncementsPage() {
           onClick={openCreateModal}
           className="px-3.5 py-2 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
         >
-          <Plus className="w-4 h-4" /> Publier
+          <Plus className="w-4 h-4" /> {t.driver.announcements.newAnnouncement}
         </button>
       </div>
 
@@ -179,13 +208,13 @@ export default function DriverAnnouncementsPage() {
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
           <p className="text-xs text-rose-700 font-medium">
-            Impossible de charger les annonces.
+            {t.common.error}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl"
+            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl cursor-pointer"
           >
-            Réessayer
+            {t.common.confirm}
           </button>
         </div>
       )}
@@ -198,10 +227,10 @@ export default function DriverAnnouncementsPage() {
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">
-              Aucune annonce publiée
+              {t.driver.announcements.noAnnouncements}
             </h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto font-medium">
-              Publiez votre première annonce pour informer vos clients de vos tarifs ou trajets.
+              {t.driver.announcements.noAnnouncementsDesc}
             </p>
           </div>
         </div>
@@ -213,13 +242,20 @@ export default function DriverAnnouncementsPage() {
           {announcements.map((item) => (
             <div
               key={item.id}
-              className="p-5 bg-white rounded-[22px] border border-slate-100 shadow-sm space-y-3 text-left"
+              className="p-5 bg-white rounded-[22px] border border-slate-100 shadow-sm space-y-3 text-start"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-[#FF9900] border border-amber-100">
-                    {item.category || 'OFFRE'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-[#FF9900] border border-amber-100">
+                      {item.category || 'OFFRE'}
+                    </span>
+                    {item.price != null && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        {item.price.toLocaleString(language === 'ar' ? 'ar-DZ' : 'fr-DZ')} {t.common.currency}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-sm font-extrabold text-slate-900 mt-2">
                     {item.title}
                   </h3>
@@ -228,17 +264,19 @@ export default function DriverAnnouncementsPage() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEditModal(item)}
-                    className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                    className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                    title={t.common.edit}
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm('Voulez-vous vraiment supprimer cette annonce ?')) {
+                      if (confirm(language === 'ar' ? 'هل تريد حذف هذا الإعلان بالتأكيد؟' : 'Veuillez confirmer la suppression de cette annonce.')) {
                         deleteMutation.mutate(item.id);
                       }
                     }}
-                    className="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
+                    className="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                    title={t.common.delete}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -252,7 +290,7 @@ export default function DriverAnnouncementsPage() {
               {item.createdAt && (
                 <div className="pt-2 border-t border-slate-100 flex items-center gap-1 text-[10px] text-slate-400 font-bold">
                   <Calendar className="w-3.5 h-3.5" />
-                  Publiée le {new Date(item.createdAt).toLocaleDateString('fr-FR')}
+                  {language === 'ar' ? 'تاريخ النشر:' : 'Publiée le'} {new Date(item.createdAt).toLocaleDateString(language === 'ar' ? 'ar-DZ' : 'fr-FR')}
                 </div>
               )}
             </div>
@@ -263,20 +301,20 @@ export default function DriverAnnouncementsPage() {
       {/* Create / Edit Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setIsModalOpen(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-left"
+            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-start"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-extrabold text-slate-900 text-base">
-                {editingId ? 'Modifier l\'annonce' : 'Publier une annonce'}
+                {editingId ? (language === 'ar' ? 'تعديل الإعلان' : 'Modifier l\'annonce') : t.driver.announcements.newAnnouncement}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -284,39 +322,54 @@ export default function DriverAnnouncementsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">Titre de l'annonce</label>
+                <label className="text-xs font-bold text-slate-700 block">{t.driver.announcements.announcementTitle}</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex: Transfert Aéroport d'Alger & Sétif..."
+                  placeholder={language === 'ar' ? 'مثال: رحلات إلى مطار هواري بومدين...' : 'Ex: Transfert Aéroport d\'Alger & Sétif...'}
                   className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
                   required
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">Catégorie</label>
-                <select
-                  value={category}
-                  onChange={(e: any) => setCategory(e.target.value)}
-                  className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
-                >
-                  <option value="SPECIAL_OFFER">Offre Spéciale</option>
-                  <option value="AIRPORT">Transfert Aéroport</option>
-                  <option value="BEACH">Trajet Plage / Vacances</option>
-                  <option value="TOUR">Circuit Touristique</option>
-                  <option value="OTHER">Autre / Général</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">{t.driver.announcements.category}</label>
+                  <select
+                    value={category}
+                    onChange={(e: any) => setCategory(e.target.value)}
+                    className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
+                  >
+                    <option value="SPECIAL_OFFER">{language === 'ar' ? 'عرض خاص' : 'Offre Spéciale'}</option>
+                    <option value="AIRPORT">{language === 'ar' ? 'توصيل للمطار' : 'Transfert Aéroport'}</option>
+                    <option value="BEACH">{language === 'ar' ? 'رحلات شاطئية' : 'Trajet Plage'}</option>
+                    <option value="TOUR">{language === 'ar' ? 'جولة سياحية' : 'Circuit Touristique'}</option>
+                    <option value="OTHER">{language === 'ar' ? 'عام / أخرى' : 'Autre / Général'}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    {language === 'ar' ? 'السعر (دج)' : 'Prix (DZD)'}
+                  </label>
+                  <input
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder={language === 'ar' ? 'اختياري (مثال: 5000)' : 'Optionnel (ex: 5000)'}
+                    className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-bold outline-none focus:border-[#FF9900] focus:bg-white"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">Description / Détails</label>
+                <label className="text-xs font-bold text-slate-700 block">{t.driver.announcements.announcementContent}</label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Décrivez votre offre ou message public..."
+                  placeholder={language === 'ar' ? 'اكتب تفاصيل العرض أو الإعلان هنا...' : 'Décrivez votre offre ou message public...'}
                   className="w-full text-xs p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-slate-900 font-medium outline-none focus:border-[#FF9900] focus:bg-white resize-none"
                   required
                 />
@@ -330,9 +383,9 @@ export default function DriverAnnouncementsPage() {
                 {createMutation.isPending || updateMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : editingId ? (
-                  'Mettre à jour'
+                  t.common.save
                 ) : (
-                  'Publier l\'annonce'
+                  t.driver.announcements.publish
                 )}
               </button>
             </form>

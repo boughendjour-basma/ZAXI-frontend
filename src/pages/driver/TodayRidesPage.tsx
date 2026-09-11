@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
 import type { Booking } from '@/types/booking.types';
+import { useTranslation } from '@/store/languageStore';
 import {
   MapPin,
   Navigation,
@@ -11,13 +12,16 @@ import {
   X,
   User,
   Phone,
+  ExternalLink,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card } from '@/components/ui/Card';
+import { cn } from '@/utils/cn';
 
-function formatTime(dateStr?: string) {
+function formatLocalizedTime(dateStr?: string, lang: string = 'fr') {
   if (!dateStr) return '--:--';
   try {
-    return new Date(dateStr).toLocaleTimeString('fr-FR', {
+    return new Date(dateStr).toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -26,10 +30,10 @@ function formatTime(dateStr?: string) {
   }
 }
 
-function formatDate(dateStr?: string) {
+function formatLocalizedDate(dateStr?: string, lang: string = 'fr') {
   if (!dateStr) return '';
   try {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return new Date(dateStr).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -40,7 +44,34 @@ function formatDate(dateStr?: string) {
 }
 
 export default function DriverTodayPage() {
+  const queryClient = useQueryClient();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const { t, language, isRTL } = useTranslation();
+
+  const acceptMutation = useMutation({
+    mutationFn: (id: string) => DriverService.acceptBooking(id),
+    onSuccess: () => {
+      setSelectedBooking(null);
+      queryClient.invalidateQueries({ queryKey: ['driverTodayBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['driverActiveBooking'] });
+      queryClient.invalidateQueries({ queryKey: ['driverPendingBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['driverStatistics'] });
+      toast.success(language === 'ar' ? 'تم قبول الرحلة بنجاح !' : 'Course acceptée avec succès !');
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message || (language === 'ar' ? 'خطأ أثناء القبول' : "Erreur lors de l'acceptation")),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => DriverService.rejectBooking(id),
+    onSuccess: () => {
+      setSelectedBooking(null);
+      queryClient.invalidateQueries({ queryKey: ['driverTodayBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['driverPendingBookings'] });
+      toast(language === 'ar' ? 'تم رفض الرحلة.' : 'Course refusée.', { icon: '✋' });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Erreur'),
+  });
 
   const { data: statsRes } = useQuery({
     queryKey: ['driverStatistics'],
@@ -50,7 +81,7 @@ export default function DriverTodayPage() {
   const rawStats = (statsRes?.data?.data as any) ?? (statsRes?.data as any) ?? {};
   const stats = {
     dailyRevenue: rawStats.dailyRevenue ?? 0,
-    completedRides: rawStats.completedRides ?? 0,
+    completedRides: rawStats.todayCompletedRides ?? 0,
     cancelledRides: rawStats.cancelledRides ?? 0,
     averageDistanceKm: rawStats.averageDistanceKm ?? 0,
   };
@@ -70,36 +101,36 @@ export default function DriverTodayPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-start">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-          Activités d'Aujourd'hui
+          {t.driver.today.title}
         </h1>
         <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Résumé opérationnel du {formatDate(new Date().toISOString())}
+          {t.driver.today.subtitle} — {formatLocalizedDate(new Date().toISOString(), language)}
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm space-y-1">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Recette du jour</p>
-          <p className="text-xl font-black text-slate-900">{stats.dailyRevenue} DA</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.driver.dashboard.todayEarnings}</p>
+          <p className="text-xl font-black text-slate-900">{stats.dailyRevenue} {t.common.currency}</p>
         </Card>
 
         <Card className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm space-y-1">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Courses réalisées</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.driver.dashboard.completedRides}</p>
           <p className="text-xl font-black text-slate-900">{stats.completedRides}</p>
         </Card>
 
         <Card className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm space-y-1">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Annulées</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.driver.dashboard.cancelledRides}</p>
           <p className="text-xl font-black text-slate-900">{stats.cancelledRides}</p>
         </Card>
 
         <Card className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm space-y-1">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Distance Moyenne</p>
-          <p className="text-xl font-black text-slate-900">{stats.averageDistanceKm} km</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.driver.statistics.avgDistance}</p>
+          <p className="text-xl font-black text-slate-900">{stats.averageDistanceKm} {t.common.kilometers}</p>
         </Card>
       </div>
 
@@ -119,9 +150,9 @@ export default function DriverTodayPage() {
       {isError && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
-          <p className="text-xs text-rose-700 font-medium">Impossible de charger les courses du jour.</p>
-          <button onClick={() => refetch()} className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl">
-            Réessayer
+          <p className="text-xs text-rose-700 font-medium">{t.common.error}</p>
+          <button onClick={() => refetch()} className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl cursor-pointer">
+            {t.common.confirm}
           </button>
         </div>
       )}
@@ -133,9 +164,9 @@ export default function DriverTodayPage() {
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900">Aucune course enregistrée aujourd'hui</h3>
+            <h3 className="text-sm font-extrabold text-slate-900">{t.driver.today.noRidesToday}</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto font-medium">
-              Les demandes acceptées ou complétées aujourd'hui s'afficheront ici en temps réel.
+              {t.driver.today.noRidesTodayDesc}
             </p>
           </div>
         </div>
@@ -145,21 +176,21 @@ export default function DriverTodayPage() {
       {!isLoading && !isError && todayBookings.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Liste des courses ({todayBookings.length})
+            {language === 'ar' ? `قائمة الرحلات (${todayBookings.length})` : `Liste des courses (${todayBookings.length})`}
           </h2>
           <div className="grid gap-3">
             {todayBookings.map((b) => (
               <div
                 key={b.id}
                 onClick={() => setSelectedBooking(b)}
-                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm hover:border-[#FF9900] transition-all cursor-pointer space-y-3 text-left"
+                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm hover:border-[#FF9900] transition-all cursor-pointer space-y-3 text-start"
               >
                 <div className="flex items-center justify-between text-xs border-b border-slate-100 pb-2">
                   <span className="font-bold text-slate-500 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-[#FF9900]" /> {formatTime(b.createdAt)}
+                    <Clock className="w-3.5 h-3.5 text-[#FF9900]" /> {formatLocalizedTime(b.createdAt, language)}
                   </span>
                   <span className="text-sm font-black text-[#FF9900]">
-                    {b.estimatedPrice ?? b.finalPrice ?? '—'} DA
+                    {b.estimatedPrice ?? b.finalPrice ?? '—'} {t.common.currency}
                   </span>
                 </div>
 
@@ -188,10 +219,10 @@ export default function DriverTodayPage() {
                         : 'bg-amber-50 text-amber-600'
                     }`}
                   >
-                    {b.status === 'COMPLETED' ? 'Terminée' : b.status === 'CANCELLED' ? 'Annulée' : 'En cours'}
+                    {b.status === 'COMPLETED' ? t.history.statusCompleted : b.status === 'CANCELLED' ? t.history.statusCancelled : t.history.statusInProgress}
                   </span>
                   <span className="text-slate-400 font-medium flex items-center gap-0.5">
-                    Détails <ChevronRight className="w-3.5 h-3.5" />
+                    {t.history.rideDetails} <ChevronRight className={cn('w-3.5 h-3.5', isRTL && 'rotate-180')} />
                   </span>
                 </div>
               </div>
@@ -203,18 +234,18 @@ export default function DriverTodayPage() {
       {/* Booking Detail Modal */}
       {selectedBooking && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setSelectedBooking(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-left"
+            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-start"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-900 text-base">Détails de la course</h3>
+              <h3 className="font-extrabold text-slate-900 text-base">{t.history.rideDetails}</h3>
               <button
                 onClick={() => setSelectedBooking(null)}
-                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -223,9 +254,9 @@ export default function DriverTodayPage() {
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-100 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Prix total</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">{t.history.totalPaid}</p>
                   <p className="text-lg font-black text-[#FF9900]">
-                    {selectedBooking.estimatedPrice ?? selectedBooking.finalPrice ?? '—'} DA
+                    {selectedBooking.estimatedPrice ?? selectedBooking.finalPrice ?? '—'} {t.common.currency}
                   </p>
                 </div>
                 <span className="px-3 py-1 bg-white rounded-full text-xs font-black text-slate-900 shadow-xs">
@@ -237,16 +268,16 @@ export default function DriverTodayPage() {
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-[#FF9900] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Départ</span>
-                    <p className="font-bold text-slate-900">{selectedBooking.pickupAddress || 'Non spécifié'}</p>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">{t.home.pickup}</span>
+                    <p className="font-bold text-slate-900">{selectedBooking.pickupAddress || t.home.currentPosition}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <Navigation className="w-4 h-4 text-slate-900 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Destination</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">{t.home.destination}</span>
                     <p className="font-bold text-slate-900">
-                      {selectedBooking.dropoffAddress || selectedBooking.destinationAddress || 'Non spécifié'}
+                      {selectedBooking.dropoffAddress || selectedBooking.destinationAddress || t.home.destination}
                     </p>
                   </div>
                 </div>
@@ -256,7 +287,7 @@ export default function DriverTodayPage() {
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                   <div className="flex items-center gap-2 font-bold text-slate-900">
                     <User className="w-4 h-4 text-[#FF9900]" />
-                    {selectedBooking.customer.name || 'Client'}
+                    {selectedBooking.customer.name || t.header.client}
                   </div>
                   {selectedBooking.customer.phone && (
                     <div className="flex items-center gap-2 text-slate-500 font-medium">
@@ -268,12 +299,50 @@ export default function DriverTodayPage() {
               )}
             </div>
 
-            <button
-              onClick={() => setSelectedBooking(null)}
-              className="w-full py-3 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-md cursor-pointer"
+            {/* Google Maps link */}
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(selectedBooking.pickupAddress || 'Bordj Bou Arréridj')}&destination=${encodeURIComponent(selectedBooking.dropoffAddress || selectedBooking.destinationAddress || '')}&travelmode=driving`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-all"
             >
-              Fermer
-            </button>
+              <ExternalLink className="w-3.5 h-3.5" />
+              {language === 'ar' ? 'فتح في خرائط Google' : 'Ouvrir dans Google Maps'}
+            </a>
+
+            {selectedBooking.status === 'PENDING' ? (
+              <div className="space-y-2 pt-1">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => rejectMutation.mutate(selectedBooking.id)}
+                    disabled={rejectMutation.isPending}
+                    className="py-3 px-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    {t.driver.today.reject}
+                  </button>
+                  <button
+                    onClick={() => acceptMutation.mutate(selectedBooking.id)}
+                    disabled={acceptMutation.isPending}
+                    className="py-3 px-3 rounded-2xl bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 text-xs font-black shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    {acceptMutation.isPending ? t.common.loading : `✓ ${t.driver.today.accept}`}
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedBooking(null)}
+                  className="w-full py-2.5 bg-white border border-slate-200 text-slate-500 font-bold text-xs rounded-2xl hover:bg-slate-50 cursor-pointer"
+                >
+                  {t.common.cancel}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setSelectedBooking(null)}
+                className="w-full py-3 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-md cursor-pointer"
+              >
+                {t.common.cancel}
+              </button>
+            )}
           </div>
         </div>
       )}

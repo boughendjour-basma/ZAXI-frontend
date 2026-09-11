@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { CustomerService } from '@/services/customer.service';
 import { FavoriteLocationsManager } from '@/components/customer/FavoriteLocationsManager';
 import { Avatar } from '@/components/ui/Avatar';
+import { useTranslation } from '@/store/languageStore';
 import {
   LogOut,
   Phone,
@@ -17,12 +18,13 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { cn } from '@/utils/cn';
 
-function formatFrenchDate(dateStr?: string | null) {
-  if (!dateStr) return 'Non renseignée';
+function formatLocalizedDate(dateStr?: string | null, lang: string = 'fr') {
+  if (!dateStr) return lang === 'ar' ? 'غير محدد' : 'Non renseignée';
   try {
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('fr-FR', {
+    return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -35,6 +37,7 @@ function formatFrenchDate(dateStr?: string | null) {
 export default function CustomerProfilePage() {
   const { user: authUser, logout } = useAuth();
   const queryClient = useQueryClient();
+  const { t, language, isRTL } = useTranslation();
 
   // Profile data query
   const { data: profileRes } = useQuery({
@@ -53,12 +56,12 @@ export default function CustomerProfilePage() {
   const updateProfileMutation = useMutation({
     mutationFn: (name: string) => CustomerService.updateProfile({ name }),
     onSuccess: () => {
-      toast.success('Nom mis à jour avec succès !');
+      toast.success(language === 'ar' ? 'تم تحديث الاسم بنجاح !' : 'Nom mis à jour avec succès !');
       queryClient.invalidateQueries({ queryKey: ['customerProfile'] });
       setIsEditingName(false);
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || 'Erreur lors de la mise à jour.';
+      const msg = err.response?.data?.message || (language === 'ar' ? 'حدث خطأ أثناء التحديث.' : 'Erreur lors de la mise à jour.');
       toast.error(msg);
     },
   });
@@ -77,13 +80,13 @@ export default function CustomerProfilePage() {
     mutationFn: (data: { currentPassword: string; newPassword: string }) =>
       CustomerService.changePassword(data),
     onSuccess: () => {
-      toast.success('Mot de passe modifié avec succès !');
+      toast.success(language === 'ar' ? 'تم تغيير كلمة المرور بنجاح !' : 'Mot de passe modifié avec succès !');
       setIsPasswordModalOpen(false);
       setCurrentPassword('');
       setNewPassword('');
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || 'Mot de passe actuel incorrect.';
+      const msg = err.response?.data?.message || (language === 'ar' ? 'كلمة المرور الحالية غير صحيحة.' : 'Mot de passe actuel incorrect.');
       toast.error(msg);
     },
   });
@@ -91,11 +94,11 @@ export default function CustomerProfilePage() {
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword) {
-      toast.error('Veuillez remplir tous les champs.');
+      toast.error(language === 'ar' ? 'يرجى ملء جميع الحقول.' : 'Veuillez remplir tous les champs.');
       return;
     }
     if (newPassword.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+      toast.error(language === 'ar' ? 'يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل.' : 'Le nouveau mot de passe doit contenir au moins 8 caractères.');
       return;
     }
     changePasswordMutation.mutate({ currentPassword, newPassword });
@@ -109,28 +112,22 @@ export default function CustomerProfilePage() {
       <div className="px-5 pt-7 pb-8 max-w-lg mx-auto space-y-5">
 
         {/* ── Title Section ── */}
-        <div className="text-left">
+        <div className="text-start">
           <h1
-            className="text-[22px] font-extrabold tracking-tight"
-            style={{ color: '#1A1A1A' }}
+            className="text-[22px] font-extrabold tracking-tight text-slate-900"
           >
-            Mon Profil
+            {t.profile.title}
           </h1>
           <p
-            className="text-[13px] mt-0.5"
-            style={{ color: '#999' }}
+            className="text-[13px] mt-0.5 text-slate-500"
           >
-            Gérez vos informations personnelles et lieux favoris
+            {t.profile.subtitle}
           </p>
         </div>
 
         {/* ── Main Profile Card ── */}
         <div
-          className="rounded-[20px] px-5 pt-7 pb-4 text-center"
-          style={{
-            backgroundColor: '#FFFFFF',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          }}
+          className="rounded-[20px] px-5 pt-7 pb-4 text-center bg-white shadow-sm"
         >
           {/* Avatar */}
           <div className="flex justify-center mb-4">
@@ -145,19 +142,13 @@ export default function CustomerProfilePage() {
                   type="text"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="text-base font-bold text-center px-3 py-1.5 rounded-xl outline-none"
-                  style={{
-                    border: '1.5px solid #FF9900',
-                    backgroundColor: '#FFF8F0',
-                    color: '#1A1A1A',
-                  }}
+                  className="text-base font-bold text-center px-3 py-1.5 rounded-xl outline-none border border-amber-500 bg-amber-50 text-slate-900"
                   autoFocus
                 />
                 <button
                   onClick={handleNameSave}
                   disabled={updateProfileMutation.isPending}
-                  className="p-2 rounded-xl"
-                  style={{ backgroundColor: '#FF9900', color: '#000' }}
+                  className="p-2 rounded-xl bg-[#FF9900] text-black cursor-pointer"
                 >
                   {updateProfileMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -167,8 +158,7 @@ export default function CustomerProfilePage() {
                 </button>
                 <button
                   onClick={() => setIsEditingName(false)}
-                  className="p-2 rounded-xl"
-                  style={{ backgroundColor: '#F0F0F0', color: '#888' }}
+                  className="p-2 rounded-xl bg-slate-100 text-slate-500 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -176,19 +166,17 @@ export default function CustomerProfilePage() {
             ) : (
               <div className="flex items-center justify-center gap-1.5">
                 <h2
-                  className="text-[17px] font-extrabold"
-                  style={{ color: '#1A1A1A' }}
+                  className="text-[17px] font-extrabold text-slate-900"
                 >
-                  {profile?.name ?? 'Client ZAXI'}
+                  {profile?.name ?? t.header.client}
                 </h2>
                 <button
                   onClick={() => {
                     setNameInput(profile?.name || '');
                     setIsEditingName(true);
                   }}
-                  className="p-1 transition-colors"
-                  style={{ color: '#AAA' }}
-                  title="Modifier le nom"
+                  className="p-1 transition-colors text-slate-400 hover:text-amber-500 cursor-pointer"
+                  title={t.common.edit}
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
@@ -198,65 +186,52 @@ export default function CustomerProfilePage() {
 
           {/* Phone */}
           <div
-            className="flex items-center justify-center gap-1.5 text-[13px] mb-5"
-            style={{ color: '#888' }}
+            className="flex items-center justify-center gap-1.5 text-[13px] mb-5 text-slate-500"
           >
-            <Phone className="h-3.5 w-3.5" style={{ color: '#FF9900' }} />
+            <Phone className="h-3.5 w-3.5 text-[#FF9900]" />
             <span className="font-medium">+213 {profile?.phone}</span>
           </div>
 
           {/* Divider */}
-          <div className="border-t mb-4" style={{ borderColor: '#F0F0F0' }} />
+          <div className="border-t mb-4 border-slate-100" />
 
           {/* Stats Row */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             {/* Courses */}
             <div
-              className="py-3.5 px-3 rounded-2xl text-center"
-              style={{
-                border: '1px solid #F0F0F0',
-                backgroundColor: '#FAFAFA',
-              }}
+              className="py-3.5 px-3 rounded-2xl text-center border border-slate-100 bg-slate-50/50"
             >
               <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <Car className="w-4 h-4" style={{ color: '#FF9900' }} />
+                <Car className="w-4 h-4 text-[#FF9900]" />
                 <span
-                  className="text-[15px] font-extrabold"
-                  style={{ color: '#1A1A1A' }}
+                  className="text-[15px] font-extrabold text-slate-900"
                 >
                   {profile?.totalTrips ?? 0}
                 </span>
               </div>
               <span
-                className="text-[10px] font-bold uppercase tracking-wider"
-                style={{ color: '#AAA' }}
+                className="text-[10px] font-bold uppercase tracking-wider text-slate-400"
               >
-                Courses
+                {t.profile.totalRides}
               </span>
             </div>
 
             {/* Date de naissance */}
             <div
-              className="py-3.5 px-3 rounded-2xl text-center"
-              style={{
-                border: '1px solid #F0F0F0',
-                backgroundColor: '#FAFAFA',
-              }}
+              className="py-3.5 px-3 rounded-2xl text-center border border-slate-100 bg-slate-50/50"
             >
               <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <Calendar className="w-4 h-4" style={{ color: '#FF9900' }} />
+                <Calendar className="w-4 h-4 text-[#FF9900]" />
                 <span
-                  className="text-[13px] font-extrabold"
-                  style={{ color: '#1A1A1A' }}
+                  className="text-[13px] font-extrabold text-slate-900"
                 >
-                  {formatFrenchDate(profile?.dateOfBirth)}
+                  {formatLocalizedDate(profile?.dateOfBirth, language)}
                 </span>
               </div>
               <span
-                className="text-[10px] font-bold uppercase tracking-wider"
-                style={{ color: '#AAA' }}
+                className="text-[10px] font-bold uppercase tracking-wider text-slate-400"
               >
-                Date de naissance
+                {t.profile.dateOfBirth}
               </span>
             </div>
           </div>
@@ -264,27 +239,19 @@ export default function CustomerProfilePage() {
           {/* Change password row */}
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="w-full py-3.5 rounded-2xl flex items-center justify-between px-4 transition-colors cursor-pointer"
-            style={{
-              backgroundColor: '#F5F5F5',
-              color: '#1A1A1A',
-            }}
+            className="w-full py-3.5 rounded-2xl flex items-center justify-between px-4 transition-colors cursor-pointer bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-100"
           >
             <div className="flex items-center gap-2.5">
-              <Key className="w-4 h-4" style={{ color: '#FF9900' }} />
-              <span className="text-[13px] font-semibold">Modifier mon mot de passe</span>
+              <Key className="w-4 h-4 text-[#FF9900]" />
+              <span className="text-[13px] font-semibold">{t.profile.changePassword}</span>
             </div>
-            <ChevronRight className="w-4 h-4" style={{ color: '#CCC' }} />
+            <ChevronRight className={cn('w-4 h-4 text-slate-400', isRTL && 'rotate-180')} />
           </button>
         </div>
 
         {/* ── Favorites Card ── */}
         <div
-          className="rounded-[20px] px-5 py-5"
-          style={{
-            backgroundColor: '#FFFFFF',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          }}
+          className="rounded-[20px] px-5 py-5 bg-white shadow-sm"
         >
           <FavoriteLocationsManager />
         </div>
@@ -292,15 +259,10 @@ export default function CustomerProfilePage() {
         {/* ── Logout Button ── */}
         <button
           onClick={logout}
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
-          style={{
-            backgroundColor: '#FFF0F0',
-            border: '1px solid #FFD4D4',
-            color: '#E53E3E',
-          }}
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 transition-colors cursor-pointer bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100"
         >
-          <LogOut className="w-4 h-4" />
-          <span className="text-[13px] font-bold">Se déconnecter</span>
+          <LogOut className={cn('w-4 h-4', isRTL && 'rotate-180')} />
+          <span className="text-[13px] font-bold">{t.nav.logout}</span>
         </button>
       </div>
 
@@ -308,28 +270,24 @@ export default function CustomerProfilePage() {
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div
-            className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] p-6 space-y-4 shadow-2xl text-left"
+            className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] p-6 space-y-4 shadow-2xl bg-white text-start"
             style={{
-              backgroundColor: '#FFFFFF',
               maxHeight: '90vh',
               overflowY: 'auto',
             }}
           >
             {/* Header */}
             <div
-              className="flex items-center justify-between pb-3"
-              style={{ borderBottom: '1px solid #F0F0F0' }}
+              className="flex items-center justify-between pb-3 border-b border-slate-100"
             >
               <h3
-                className="text-base font-extrabold"
-                style={{ color: '#1A1A1A' }}
+                className="text-base font-extrabold text-slate-900"
               >
-                Modifier le mot de passe
+                {t.profile.changePassword}
               </h3>
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="p-2 rounded-full transition-colors"
-                style={{ backgroundColor: '#F5F5F5', color: '#888' }}
+                className="p-2 rounded-full transition-colors bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -338,47 +296,31 @@ export default function CustomerProfilePage() {
             <form onSubmit={handlePasswordSubmit} className="space-y-3.5">
               <div className="space-y-1">
                 <label
-                  className="text-[11px] font-bold uppercase tracking-wider"
-                  style={{ color: '#AAA' }}
+                  className="text-[11px] font-bold uppercase tracking-wider text-slate-400"
                 >
-                  Mot de passe actuel
+                  {t.profile.currentPassword}
                 </label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full text-[13px] p-3.5 rounded-2xl outline-none"
-                  style={{
-                    border: '1px solid #E8E8E8',
-                    backgroundColor: '#FFFFFF',
-                    color: '#1A1A1A',
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = '#FF9900')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = '#E8E8E8')}
+                  className="w-full text-[13px] p-3.5 rounded-2xl outline-none border border-slate-200 bg-white text-slate-900 focus:border-[#FF9900]"
                   required
                 />
               </div>
 
               <div className="space-y-1">
                 <label
-                  className="text-[11px] font-bold uppercase tracking-wider"
-                  style={{ color: '#AAA' }}
+                  className="text-[11px] font-bold uppercase tracking-wider text-slate-400"
                 >
-                  Nouveau mot de passe
+                  {t.profile.newPassword}
                 </label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full text-[13px] p-3.5 rounded-2xl outline-none"
-                  style={{
-                    border: '1px solid #E8E8E8',
-                    backgroundColor: '#FFFFFF',
-                    color: '#1A1A1A',
-                  }}
-                  placeholder="Minimum 8 caractères"
-                  onFocus={(e) => (e.currentTarget.style.borderColor = '#FF9900')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = '#E8E8E8')}
+                  className="w-full text-[13px] p-3.5 rounded-2xl outline-none border border-slate-200 bg-white text-slate-900 focus:border-[#FF9900]"
+                  placeholder={language === 'ar' ? '8 أحرف على الأقل' : 'Minimum 8 caractères'}
                   required
                 />
               </div>
@@ -386,16 +328,12 @@ export default function CustomerProfilePage() {
               <button
                 type="submit"
                 disabled={changePasswordMutation.isPending}
-                className="w-full py-3.5 rounded-2xl font-extrabold text-[13px] flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                style={{
-                  backgroundColor: '#FF9900',
-                  color: '#000',
-                }}
+                className="w-full py-3.5 rounded-2xl font-extrabold text-[13px] flex items-center justify-center gap-2 cursor-pointer shadow-md bg-[#FF9900] hover:bg-[#FF8800] text-black"
               >
                 {changePasswordMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  'Changer le mot de passe'
+                  t.profile.changePassword
                 )}
               </button>
             </form>

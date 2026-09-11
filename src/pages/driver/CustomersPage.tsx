@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
+import { useTranslation } from '@/store/languageStore';
 import {
   Users,
   Search,
@@ -12,6 +13,7 @@ import {
   X,
   Calendar,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface CustomerItem {
   id: string;
@@ -26,6 +28,7 @@ export default function DriverCustomersPage() {
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState<string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
+  const { t, language, isRTL } = useTranslation();
 
   const { data: res, isLoading, isError, refetch } = useQuery({
     queryKey: ['driverCustomers', page],
@@ -51,25 +54,28 @@ export default function DriverCustomersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-start">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-          Répertoire des clients
+          {t.driver.customers.title}
         </h1>
         <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Liste des clients inscrits sur la plateforme ZAXI
+          {t.driver.customers.subtitle}
         </p>
       </div>
 
       {/* Search Input */}
       <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+        <Search className={cn('w-4 h-4 text-slate-400 absolute top-3.5', isRTL ? 'right-3.5' : 'left-3.5')} />
         <input
           type="text"
-          placeholder="Rechercher par nom ou numéro de téléphone..."
+          placeholder={t.driver.customers.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full text-xs pl-10 pr-4 py-3 rounded-2xl border border-slate-100 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#FF9900] shadow-xs"
+          className={cn(
+            'w-full text-xs py-3 rounded-2xl border border-slate-100 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#FF9900] shadow-xs',
+            isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'
+          )}
         />
       </div>
 
@@ -95,13 +101,13 @@ export default function DriverCustomersPage() {
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
           <p className="text-xs text-rose-700 font-medium">
-            Impossible de charger le répertoire des clients.
+            {t.common.error}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl"
+            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl cursor-pointer"
           >
-            Réessayer
+            {t.common.confirm}
           </button>
         </div>
       )}
@@ -114,10 +120,10 @@ export default function DriverCustomersPage() {
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">
-              Aucun client trouvé
+              {t.driver.customers.noCustomers}
             </h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto font-medium">
-              Aucun client ne correspond à votre recherche.
+              {language === 'ar' ? 'لا يوجد زبائن يطابقون بحثك.' : 'Aucun client ne correspond à votre recherche.'}
             </p>
           </div>
         </div>
@@ -139,7 +145,7 @@ export default function DriverCustomersPage() {
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-xs font-extrabold text-slate-900 truncate">
-                      {c.name || 'Client ZAXI'}
+                      {c.name || t.header.client}
                     </h4>
                     <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
                       <Phone className="w-3 h-3 text-[#FF9900]" /> {c.phone}
@@ -147,12 +153,12 @@ export default function DriverCustomersPage() {
                   </div>
                 </div>
 
-                <div className="text-right text-xs shrink-0">
+                <div className="text-end text-xs shrink-0">
                   <span className="font-extrabold text-slate-900 block">
-                    {c.totalTrips ?? 0} courses
+                    {c.totalTrips ?? 0} {t.profile.totalRides}
                   </span>
                   <span className="text-[10px] text-[#FF9900] font-bold">
-                    Compte Actif
+                    {language === 'ar' ? 'حساب نشط' : 'Compte Actif'}
                   </span>
                 </div>
               </div>
@@ -165,19 +171,19 @@ export default function DriverCustomersPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" /> Précédent
+                <ChevronLeft className={cn('w-4 h-4', isRTL && 'rotate-180')} /> {language === 'ar' ? 'السابق' : 'Précédent'}
               </button>
               <span className="text-slate-400 font-bold">
-                Page {page} / {pagination.totalPages}
+                {language === 'ar' ? `صفحة ${page} من ${pagination.totalPages}` : `Page ${page} / ${pagination.totalPages}`}
               </span>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page >= pagination.totalPages}
-                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white cursor-pointer"
               >
-                Suivant <ChevronRight className="w-4 h-4" />
+                {language === 'ar' ? 'التالي' : 'Suivant'} <ChevronRight className={cn('w-4 h-4', isRTL && 'rotate-180')} />
               </button>
             </div>
           )}
@@ -187,12 +193,12 @@ export default function DriverCustomersPage() {
       {/* Customer Detail Modal */}
       {selectedCustomer && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setSelectedCustomer(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-left"
+            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-start"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
@@ -201,17 +207,17 @@ export default function DriverCustomersPage() {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    {selectedCustomer.name || 'Client ZAXI'}
+                    {selectedCustomer.name || t.header.client}
                   </h3>
                   <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                    Compte Vérifié
+                    {language === 'ar' ? 'حساب موثق' : 'Compte Vérifié'}
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -220,7 +226,7 @@ export default function DriverCustomersPage() {
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 font-bold">Numéro Téléphone</span>
+                  <span className="text-slate-400 font-bold">{t.profile.phone}</span>
                   <a
                     href={`tel:${selectedCustomer.phone}`}
                     className="font-extrabold text-[#FF9900] flex items-center gap-1 hover:underline"
@@ -232,10 +238,10 @@ export default function DriverCustomersPage() {
 
                 {selectedCustomer.createdAt && (
                   <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-                    <span className="text-slate-400 font-bold">Inscrit le</span>
+                    <span className="text-slate-400 font-bold">{language === 'ar' ? 'تاريخ التسجيل' : 'Inscrit le'}</span>
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      {new Date(selectedCustomer.createdAt).toLocaleDateString('fr-FR')}
+                      {new Date(selectedCustomer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-DZ' : 'fr-FR')}
                     </span>
                   </div>
                 )}
@@ -246,7 +252,7 @@ export default function DriverCustomersPage() {
                   href={`tel:${selectedCustomer.phone}`}
                   className="py-3 px-3 rounded-2xl bg-[#FF9900] text-slate-950 font-black text-xs text-center flex items-center justify-center gap-1.5 shadow-sm"
                 >
-                  <Phone className="w-4 h-4" /> Appeler
+                  <Phone className="w-4 h-4" /> {t.tracking.call}
                 </a>
                 <a
                   href={`https://wa.me/${selectedCustomer.phone?.replace(/[^0-9]/g, '')}`}
@@ -263,7 +269,7 @@ export default function DriverCustomersPage() {
               onClick={() => setSelectedCustomer(null)}
               className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl cursor-pointer"
             >
-              Fermer
+              {t.common.cancel}
             </button>
           </div>
         </div>

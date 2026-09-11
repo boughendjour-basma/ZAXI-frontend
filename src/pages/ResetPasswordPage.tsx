@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { AuthService } from '@/services/auth.service';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
+import { useTranslation } from '@/store/languageStore';
 
 const schema = z
   .object({
@@ -26,6 +27,7 @@ export default function ResetPasswordPage() {
   const location = useLocation();
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const { t, language } = useTranslation();
 
   // resetToken lives only in router state (memory — never persisted)
   const resetToken: string | undefined = (location.state as any)?.resetToken;
@@ -33,7 +35,7 @@ export default function ResetPasswordPage() {
   // If someone navigates here directly without a token, redirect them
   useEffect(() => {
     if (!resetToken) {
-      toast.error('Session expirée. Veuillez recommencer.');
+      toast.error(language === 'ar' ? 'انتهت الجلسة. يرجى المحاولة مجدداً.' : 'Session expirée. Veuillez recommencer.');
       navigate('/forgot-password', { replace: true });
     }
   }, [resetToken, navigate]);
@@ -51,14 +53,16 @@ export default function ResetPasswordPage() {
     mutationFn: (data: FormValues) =>
       AuthService.resetPassword({ resetToken: resetToken!, newPassword: data.newPassword }),
     onSuccess: () => {
-      toast.success('Mot de passe mis à jour avec succès !');
+      toast.success(language === 'ar' ? 'تم تحديث كلمة المرور بنجاح !' : 'Mot de passe mis à jour avec succès !');
       // Clear the state so the token is gone from memory
       navigate('/login', { replace: true, state: {} });
     },
     onError: (err: any) => {
       const msg =
         err.response?.data?.message ||
-        'Lien de réinitialisation invalide ou expiré. Veuillez recommencer.';
+        (language === 'ar'
+          ? 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى المحاولة مجدداً.'
+          : 'Lien de réinitialisation invalide ou expiré. Veuillez recommencer.');
       toast.error(msg);
       navigate('/forgot-password', { replace: true });
     },
@@ -78,6 +82,7 @@ export default function ResetPasswordPage() {
         maxWidth: '448px',
         margin: '0 auto',
         position: 'relative',
+        direction: language === 'ar' ? 'rtl' : 'ltr',
       }}
     >
       {/* Top Logo */}
@@ -113,40 +118,23 @@ export default function ResetPasswordPage() {
             letterSpacing: '0.3px',
           }}
         >
-          Nouveau mot de passe
+          {t.auth.resetPasswordTitle}
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', textAlign: 'center', margin: '0 0 20px 0' }}>
-          Choisissez un mot de passe sécurisé
+          {t.auth.resetPasswordSubtitle}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* New Password */}
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                borderRadius: '14px',
-                padding: '0 14px',
-              }}
-            >
-              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type={showNew ? 'text' : 'password'}
-                placeholder="Nouveau mot de passe ..."
+                placeholder={t.profile.newPassword + ' ...'}
                 disabled={resetMutation.isPending}
                 {...register('newPassword')}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  color: '#333',
-                  padding: '14px 0',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}
               />
               <button
                 type="button"
@@ -165,31 +153,14 @@ export default function ResetPasswordPage() {
 
           {/* Confirm Password */}
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                borderRadius: '14px',
-                padding: '0 14px',
-              }}
-            >
-              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type={showConfirm ? 'text' : 'password'}
-                placeholder="Confirmer le mot de passe ..."
+                placeholder={t.profile.confirmPassword + ' ...'}
                 disabled={resetMutation.isPending}
                 {...register('confirmPassword')}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  color: '#333',
-                  padding: '14px 0',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}
               />
               <button
                 type="button"
@@ -225,7 +196,9 @@ export default function ResetPasswordPage() {
                 opacity: resetMutation.isPending ? 0.5 : 1,
               }}
             >
-              {resetMutation.isPending ? 'Enregistrement...' : 'Enregistrer le mot de passe'}
+              {resetMutation.isPending
+                ? t.common.loading
+                : (language === 'ar' ? 'حفظ كلمة المرور' : 'Enregistrer le mot de passe')}
             </button>
           </div>
 
@@ -235,7 +208,7 @@ export default function ResetPasswordPage() {
               to="/forgot-password"
               style={{ color: '#fff', fontSize: '12px', fontWeight: 600, textDecoration: 'underline' }}
             >
-              Recommencer
+              {language === 'ar' ? 'إعادة المحاولة' : 'Recommencer'}
             </Link>
           </div>
         </form>

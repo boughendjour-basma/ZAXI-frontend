@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
 import type { Booking } from '@/types/booking.types';
+import { useTranslation } from '@/store/languageStore';
 import {
   MapPin,
   Navigation,
@@ -13,11 +14,12 @@ import {
   Phone,
   ChevronLeft,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
-function formatDate(dateStr?: string) {
+function formatLocalizedDate(dateStr?: string, lang: string = 'fr') {
   if (!dateStr) return '';
   try {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return new Date(dateStr).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -33,6 +35,7 @@ export default function DriverRideHistoryPage() {
   const [page, setPage] = useState<number>(1);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const { t, language, isRTL } = useTranslation();
 
   const { data: bookingsRes, isLoading, isError, refetch } = useQuery({
     queryKey: ['driverBookingsHistory', page, filterStatus],
@@ -54,22 +57,22 @@ export default function DriverRideHistoryPage() {
   const pagination = (rawData as any)?.pagination ?? { page: 1, totalPages: 1 };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-start">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-          Historique des courses
+          {t.driver.history.title}
         </h1>
         <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Toutes les courses enregistrées sur la plateforme ZAXI
+          {t.driver.history.subtitle}
         </p>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {[
-          { id: 'ALL', label: 'Toutes' },
-          { id: 'COMPLETED', label: 'Terminées' },
-          { id: 'CANCELLED', label: 'Annulées' },
+          { id: 'ALL', label: t.history.filterAll },
+          { id: 'COMPLETED', label: t.history.filterCompleted },
+          { id: 'CANCELLED', label: t.history.filterCancelled },
         ].map((item) => (
           <button
             key={item.id}
@@ -101,9 +104,9 @@ export default function DriverRideHistoryPage() {
       {isError && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
-          <p className="text-xs text-rose-700 font-medium">Impossible de charger l'historique des courses.</p>
-          <button onClick={() => refetch()} className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl">
-            Réessayer
+          <p className="text-xs text-rose-700 font-medium">{t.common.error}</p>
+          <button onClick={() => refetch()} className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl cursor-pointer">
+            {t.common.confirm}
           </button>
         </div>
       )}
@@ -115,9 +118,9 @@ export default function DriverRideHistoryPage() {
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900">Aucune course dans l'historique</h3>
+            <h3 className="text-sm font-extrabold text-slate-900">{t.history.noRides}</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto font-medium">
-              Les courses effectuées ou annulées s'afficheront ici.
+              {t.history.noRidesDesc}
             </p>
           </div>
         </div>
@@ -131,14 +134,14 @@ export default function DriverRideHistoryPage() {
               <div
                 key={b.id}
                 onClick={() => setSelectedBooking(b)}
-                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm hover:border-[#FF9900] transition-all cursor-pointer space-y-3 text-left"
+                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-sm hover:border-[#FF9900] transition-all cursor-pointer space-y-3 text-start"
               >
                 <div className="flex items-center justify-between text-xs border-b border-slate-100 pb-2">
                   <span className="font-bold text-slate-500 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-[#FF9900]" /> {formatDate(b.createdAt)}
+                    <Clock className="w-3.5 h-3.5 text-[#FF9900]" /> {formatLocalizedDate(b.createdAt, language)}
                   </span>
                   <span className="text-sm font-black text-[#FF9900]">
-                    {b.estimatedPrice ?? b.finalPrice ?? '—'} DA
+                    {b.estimatedPrice ?? b.finalPrice ?? '—'} {t.common.currency}
                   </span>
                 </div>
 
@@ -167,10 +170,10 @@ export default function DriverRideHistoryPage() {
                         : 'bg-amber-50 text-amber-600'
                     }`}
                   >
-                    {b.status === 'COMPLETED' ? 'Terminée' : b.status === 'CANCELLED' ? 'Annulée' : b.status}
+                    {b.status === 'COMPLETED' ? t.history.statusCompleted : b.status === 'CANCELLED' ? t.history.statusCancelled : t.history.statusInProgress}
                   </span>
                   <span className="text-slate-400 font-medium flex items-center gap-0.5">
-                    Détails <ChevronRight className="w-3.5 h-3.5" />
+                    {t.history.rideDetails} <ChevronRight className={cn('w-3.5 h-3.5', isRTL && 'rotate-180')} />
                   </span>
                 </div>
               </div>
@@ -183,19 +186,19 @@ export default function DriverRideHistoryPage() {
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" /> Précédent
+                <ChevronLeft className={cn('w-4 h-4', isRTL && 'rotate-180')} /> {language === 'ar' ? 'السابق' : 'Précédent'}
               </button>
               <span className="text-xs text-slate-400 font-bold">
-                Page {page} / {pagination.totalPages}
+                {language === 'ar' ? `صفحة ${page} من ${pagination.totalPages}` : `Page ${page} / ${pagination.totalPages}`}
               </span>
               <button
                 disabled={page >= pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white cursor-pointer"
               >
-                Suivant <ChevronRight className="w-4 h-4" />
+                {language === 'ar' ? 'التالي' : 'Suivant'} <ChevronRight className={cn('w-4 h-4', isRTL && 'rotate-180')} />
               </button>
             </div>
           )}
@@ -205,18 +208,18 @@ export default function DriverRideHistoryPage() {
       {/* Booking Detail Modal */}
       {selectedBooking && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setSelectedBooking(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-left"
+            className="bg-white rounded-[24px] max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100 text-start"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-900 text-base">Détails de la course</h3>
+              <h3 className="font-extrabold text-slate-900 text-base">{t.history.rideDetails}</h3>
               <button
                 onClick={() => setSelectedBooking(null)}
-                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -225,9 +228,9 @@ export default function DriverRideHistoryPage() {
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-100 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Prix total</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">{t.history.totalPaid}</p>
                   <p className="text-lg font-black text-[#FF9900]">
-                    {selectedBooking.estimatedPrice ?? selectedBooking.finalPrice ?? '—'} DA
+                    {selectedBooking.estimatedPrice ?? selectedBooking.finalPrice ?? '—'} {t.common.currency}
                   </p>
                 </div>
                 <span className="px-3 py-1 bg-white rounded-full text-xs font-black text-slate-900 shadow-xs">
@@ -239,16 +242,16 @@ export default function DriverRideHistoryPage() {
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-[#FF9900] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Départ</span>
-                    <p className="font-bold text-slate-900">{selectedBooking.pickupAddress || 'Non spécifié'}</p>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">{t.home.pickup}</span>
+                    <p className="font-bold text-slate-900">{selectedBooking.pickupAddress || t.home.currentPosition}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <Navigation className="w-4 h-4 text-slate-900 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Destination</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">{t.home.destination}</span>
                     <p className="font-bold text-slate-900">
-                      {selectedBooking.dropoffAddress || selectedBooking.destinationAddress || 'Non spécifié'}
+                      {selectedBooking.dropoffAddress || selectedBooking.destinationAddress || t.home.destination}
                     </p>
                   </div>
                 </div>
@@ -258,7 +261,7 @@ export default function DriverRideHistoryPage() {
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                   <div className="flex items-center gap-2 font-bold text-slate-900">
                     <User className="w-4 h-4 text-[#FF9900]" />
-                    {selectedBooking.customer.name || 'Client'}
+                    {selectedBooking.customer.name || t.header.client}
                   </div>
                   {selectedBooking.customer.phone && (
                     <div className="flex items-center gap-2 text-slate-500 font-medium">
@@ -274,7 +277,7 @@ export default function DriverRideHistoryPage() {
               onClick={() => setSelectedBooking(null)}
               className="w-full py-3 bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-xs rounded-2xl shadow-md cursor-pointer"
             >
-              Fermer
+              {t.common.cancel}
             </button>
           </div>
         </div>

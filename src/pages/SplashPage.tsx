@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import logoUrl from '@/assets/logo.png';
+import { useTranslation } from '@/store/languageStore';
 
 export default function SplashPage() {
   const navigate = useNavigate();
   const { isAuthenticated, role } = useAuthStore();
+  const { language } = useTranslation();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -59,7 +61,7 @@ export default function SplashPage() {
           transition={{ delay: 0.5 }}
           className="text-white/90 text-xs font-semibold tracking-widest uppercase mt-1"
         >
-          Votre chauffeur, à votre service
+          {language === 'ar' ? 'سائقك الخاص، في خدمتك' : 'Votre chauffeur, à votre service'}
         </motion.p>
 
         {/* Loading dots */}

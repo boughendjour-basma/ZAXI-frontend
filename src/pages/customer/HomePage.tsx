@@ -3,60 +3,127 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
 import { BookingService } from '@/services/booking.service';
 import { CustomerBookingCard } from '@/components/customer/CustomerBookingCard';
+import { OfferBookingCard } from '@/components/customer/OfferBookingCard';
 import { RideTrackingScreen } from '@/components/customer/RideTrackingScreen';
+import { useTranslation } from '@/store/languageStore';
+import { useSocket } from '@/hooks/useSocket';
 import {
   Home as HomeIcon,
   Calendar,
   X,
   ShieldCheck,
-  Star,
   CheckCircle2,
   Sparkles,
   ArrowRight,
   Clock,
   MapPin,
   Tag,
+  Car,
+  Banknote,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { cn } from '@/utils/cn';
 
 import car1Url from '@/assets/car_1.jpg';
 import car2Url from '@/assets/car_2.jpg';
 
 export default function CustomerHomePage() {
   const queryClient = useQueryClient();
+  const { t, language, isRTL } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<'main' | 'finished' | 'scheduled' | 'offers'>('main');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [showTrackingMap, setShowTrackingMap] = useState(true);
+  const [selectedOffer, setSelectedOffer] = useState<any | null>(null);
+  const [activePhotoModal, setActivePhotoModal] = useState<string | null>(null);
 
   // ── Driver public profile ──────────────────────────────────────────────────
   const { data: driverProfileRes } = useQuery({
     queryKey: ['publicDriverProfile'],
     queryFn: () => DriverService.getPublicProfile(),
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   });
 
   const rawDriver = driverProfileRes?.data?.data?.driver ?? (driverProfileRes?.data as any);
   const driver = rawDriver ?? {
-    driverName: 'Zakaria boukejar',
+    driverName: 'Zakaria Boukedjar',
+    vehicleMake: 'Volkswagen',
     vehicleModel: 'Golf 7',
     vehiclePlate: '029954-112-34',
+    vehicleColor: 'Gris',
     phoneNumber: '0555123456',
+    whatsappNumber: '0555123456',
     rating: 4.98,
     totalRides: 420,
+    carPhotos: null,
   };
 
-  // ── Customer bookings (poll every 5s for status updates) ──────────────────
+  const carPhotosList: string[] = (Array.isArray(driver.carPhotos) && driver.carPhotos.length > 0)
+    ? driver.carPhotos
+    : [car2Url, car1Url];
+
+  const { useSocketEvent } = useSocket();
+
+  // ── Customer bookings (poll every 2.5s for instant status updates) ─────────
   const { data: bookingsRes, refetch: refetchBookings } = useQuery({
     queryKey: ['myBookings'],
     queryFn: () => BookingService.getMyBookings(),
-    refetchInterval: 5000,
+    refetchInterval: 2500,
+  });
+
+  // Listen in real-time when the driver accepts the ride
+  useSocketEvent('booking:accepted', () => {
+    toast.success(
+      language === 'ar'
+        ? 'تم قبول طلب مشوارك من طرف السائق ! 🚖'
+        : 'Votre course a été acceptée par le chauffeur ! 🚖',
+      { duration: 6000 }
+    );
+    queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+    setShowTrackingMap(true);
+  });
+
+  useSocketEvent('booking:started', () => {
+    toast.success(
+      language === 'ar' ? 'انطلقت رحلتك مع السائق ! 🚗' : 'Votre course a démarré ! 🚗'
+    );
+    queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+    setShowTrackingMap(true);
+  });
+
+  useSocketEvent('booking:completed', () => {
+    toast.success(
+      language === 'ar' ? 'وصلت إلى وجهتك ! اكتملت الرحلة 🎉' : 'Course terminée avec succès ! 🎉'
+    );
+    queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+  });
+
+  useSocketEvent('booking:cancelled', () => {
+    toast(
+      language === 'ar' ? 'تم إلغاء الرحلة.' : 'La course a été annulée.',
+      { icon: 'ℹ️' }
+    );
+    queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+  });
+
+  // ── Real-time Socket.IO Listeners for Announcements ───────────────────────
+  useSocketEvent('announcement:new', () => {
+    queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
+  });
+  useSocketEvent('announcement:updated', () => {
+    queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
+  });
+  useSocketEvent('announcement:removed', () => {
+    queryClient.invalidateQueries({ queryKey: ['driverAnnouncements'] });
   });
 
   // ── Driver announcements ───────────────────────────────────────────────────
   const { data: announcementsRes } = useQuery({
     queryKey: ['driverAnnouncements'],
     queryFn: () => DriverService.getPublicAnnouncements(),
+    refetchInterval: 5000,
   });
 
   const rawBookings = bookingsRes?.data?.data;
@@ -66,7 +133,7 @@ export default function CustomerHomePage() {
     ? (rawBookings as any).bookings
     : [];
 
-  const rawAnnouncements = announcementsRes?.data?.data ?? (announcementsRes?.data as any);
+  const rawAnnouncements = (announcementsRes?.data?.data as any) ?? (announcementsRes?.data as any);
   const announcements: any[] = Array.isArray(rawAnnouncements)
     ? rawAnnouncements
     : Array.isArray(rawAnnouncements?.announcements)
@@ -80,18 +147,18 @@ export default function CustomerHomePage() {
 
   const completedBookings = bookings.filter((b) => b.status === 'COMPLETED');
   const scheduledBookings = bookings.filter(
-    (b) => b.scheduledAt && new Date(b.scheduledAt) > new Date(),
+    (b) => b.status !== 'COMPLETED' && b.status !== 'CANCELLED',
   );
 
   // ── Cancel mutation ────────────────────────────────────────────────────────
   const cancelBookingMutation = useMutation({
     mutationFn: (id: string) => BookingService.cancelBooking(id),
     onSuccess: () => {
-      toast.success('Réservation annulée.');
+      toast.success(language === 'ar' ? 'تم إلغاء الحجز بنجاح.' : 'Réservation annulée.');
       queryClient.invalidateQueries({ queryKey: ['myBookings'] });
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || "Erreur lors de l'annulation.";
+      const msg = err.response?.data?.message || (language === 'ar' ? 'حدث خطأ أثناء الإلغاء.' : "Erreur lors de l'annulation.");
       toast.error(msg);
     },
   });
@@ -105,7 +172,7 @@ export default function CustomerHomePage() {
     return (
       <RideTrackingScreen
         booking={activeBooking}
-        driverName={driver.driverName ?? driver.name ?? 'Chauffeur'}
+        driverName={driver.driverName ?? driver.name ?? 'Zakaria Boukedjar'}
         driverVehicle={driver.vehicleModel ?? 'Golf 7'}
         driverPlate={driver.vehiclePlate ?? '029954-112-34'}
         driverPhone={driver.phoneNumber ?? driver.phone ?? ''}
@@ -113,6 +180,14 @@ export default function CustomerHomePage() {
       />
     );
   }
+
+  const serviceList = [
+    t.home.services.city,
+    t.home.services.airport,
+    t.home.services.interWilayas,
+    t.home.services.beaches,
+    t.home.services.tourist,
+  ];
 
   return (
     <div
@@ -131,60 +206,17 @@ export default function CustomerHomePage() {
             <div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm">
               <Car className="h-5 w-5 text-slate-900" />
             </div>
-            <div>
-              <p className="text-slate-900 font-black text-sm">Course en cours</p>
-              <p className="text-slate-800 text-[11px] font-medium">Touchez pour ouvrir la carte de suivi en direct</p>
+            <div className="text-start">
+              <p className="text-slate-900 font-black text-sm">{t.home.activeRideTitle}</p>
+              <p className="text-slate-800 text-[11px] font-medium">{t.home.activeRideSubtitle}</p>
             </div>
           </div>
-          <span className="bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-            Afficher <ArrowRight className="h-3.5 w-3.5 inline" />
+          <span className="bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold group-hover:scale-105 transition-transform flex items-center gap-1">
+            {t.home.showRide} <ArrowRight className={cn('h-3.5 w-3.5 inline', isRTL && 'rotate-180')} />
           </span>
         </div>
       )}
 
-      {/* PENDING booking: status card */}
-      {activeBooking && activeBooking.status === 'PENDING' ? (
-        <div className="bg-white rounded-3xl border border-amber-200/70 p-5 shadow-lg shadow-amber-500/5 mb-6 text-left space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
-              </span>
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                En attente de confirmation
-              </span>
-            </div>
-            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
-              En attente
-            </span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2 text-xs text-slate-700">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
-              <span><strong>Départ:</strong> {activeBooking.pickupAddress || 'Position Actuelle'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-slate-900 shrink-0" />
-              <span><strong>Destination:</strong> {activeBooking.destinationAddress || activeBooking.dropoffAddress || 'Non spécifiée'}</span>
-            </div>
-            <div className="pt-2 border-t border-amber-200/50 flex justify-between items-center font-bold text-slate-900">
-              <span>Tarif estimé</span>
-              <span className="text-amber-600 text-sm">{activeBooking.estimatedPrice || 150} DA</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => cancelBookingMutation.mutate(activeBooking.id)}
-            disabled={cancelBookingMutation.isPending}
-            className="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-2xl font-bold text-xs tracking-wider transition-all disabled:opacity-50"
-          >
-            Annuler la réservation
-          </button>
-        </div>
-      ) : null}
 
       {/* ── 1. Action Tabs Row (Home icon + Reservations finis + Reservations programmes) ── */}
       <div className="flex items-center gap-2.5 my-4 overflow-x-auto pb-1 scrollbar-none">
@@ -192,12 +224,12 @@ export default function CustomerHomePage() {
         <button
           type="button"
           onClick={() => setActiveTab('main')}
-          className={`p-2.5 rounded-2xl transition-all flex items-center justify-center shrink-0 ${
+          className={`p-2.5 rounded-2xl transition-all flex items-center justify-center shrink-0 cursor-pointer ${
             activeTab === 'main'
               ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
               : 'bg-white text-slate-400 hover:text-amber-500 border border-slate-200/80 hover:border-amber-300'
           }`}
-          title="Accueil"
+          title={t.home.tabHome}
         >
           <HomeIcon className="h-5 w-5 fill-current" />
         </button>
@@ -206,16 +238,16 @@ export default function CustomerHomePage() {
         <button
           type="button"
           onClick={() => setActiveTab(activeTab === 'finished' ? 'main' : 'finished')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'finished'
               ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
               : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
           }`}
         >
           <Clock className="h-3.5 w-3.5 opacity-80" />
-          <span>Reservations finis</span>
+          <span>{t.home.tabFinished}</span>
           {completedBookings.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
+            <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
               {completedBookings.length}
             </span>
           )}
@@ -225,17 +257,36 @@ export default function CustomerHomePage() {
         <button
           type="button"
           onClick={() => setActiveTab(activeTab === 'scheduled' ? 'main' : 'scheduled')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'scheduled'
               ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
               : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
           }`}
         >
           <Calendar className="h-3.5 w-3.5 opacity-80" />
-          <span>Reservations programmes</span>
+          <span>{t.home.tabScheduled}</span>
           {scheduledBookings.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
+            <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
               {scheduledBookings.length}
+            </span>
+          )}
+        </button>
+
+        {/* Button: Nos Offres */}
+        <button
+          type="button"
+          onClick={() => setActiveTab(activeTab === 'offers' ? 'main' : 'offers')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'offers'
+              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+          }`}
+        >
+          <Tag className="h-3.5 w-3.5 opacity-80" />
+          <span>{t.home.ourOffers}</span>
+          {announcements.length > 0 && (
+            <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
+              {announcements.length}
             </span>
           )}
         </button>
@@ -243,10 +294,10 @@ export default function CustomerHomePage() {
 
       {/* ── Finished Reservations Tab Content ── */}
       {activeTab === 'finished' && (
-        <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-left shadow-sm space-y-3">
+        <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-start shadow-sm space-y-3">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            Réservations terminées
+            {t.home.finishedRidesTitle}
           </h3>
           {completedBookings.length > 0 ? (
             completedBookings.map((b) => (
@@ -255,20 +306,20 @@ export default function CustomerHomePage() {
                 className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3 text-xs"
               >
                 <div>
-                  <p className="font-bold text-slate-900">{b.destinationAddress || 'Course en ville'}</p>
+                  <p className="font-bold text-slate-900">{b.destinationAddress || t.home.cityRide}</p>
                   <p className="text-[#666] text-[11px] mt-0.5">{b.pickupAddress}</p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="font-extrabold text-amber-600">{b.estimatedPrice} DA</p>
+                <div className="text-end shrink-0">
+                  <p className="font-extrabold text-amber-600">{b.estimatedPrice} {t.home.currency}</p>
                   <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Terminée
+                    {t.common.completed}
                   </span>
                 </div>
               </div>
             ))
           ) : (
             <p className="text-xs text-slate-500 italic py-3 text-center">
-              Aucune réservation terminée pour le moment.
+              {t.home.noFinishedRides}
             </p>
           )}
         </div>
@@ -276,75 +327,218 @@ export default function CustomerHomePage() {
 
       {/* ── Scheduled Reservations Tab Content ── */}
       {activeTab === 'scheduled' && (
-        <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-left shadow-sm space-y-3">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-amber-500" />
-            Réservations programmées
-          </h3>
+        <div className="mb-6 space-y-4 text-start">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-amber-500" />
+              {t.home.scheduledRidesTitle}
+            </h3>
+            {scheduledBookings.length > 0 && (
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                {scheduledBookings.length} {language === 'ar' ? 'حجز' : 'réservation(s)'}
+              </span>
+            )}
+          </div>
+
           {scheduledBookings.length > 0 ? (
             scheduledBookings.map((b) => (
               <div
                 key={b.id}
-                className="p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 flex items-center justify-between gap-3 text-xs"
+                className="bg-white rounded-3xl border border-amber-200/70 p-5 shadow-lg shadow-amber-500/5 space-y-4 text-start"
               >
-                <div>
-                  <p className="font-bold text-slate-900">{b.destinationAddress || 'Course programmée'}</p>
-                  <p className="text-slate-500 text-[11px] mt-0.5">
-                    Prévue le: {new Date(b.scheduledAt).toLocaleString('fr-FR')}
-                  </p>
+                {/* Header with status badge */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    {b.status === 'PENDING' ? (
+                      <>
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                        </span>
+                        <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          {t.home.pendingConfirmation}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="relative flex h-3 w-3">
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                        </span>
+                        <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                          {b.status === 'ACCEPTED' ? (language === 'ar' ? 'تم تأكيد الحجز' : 'Réservation confirmée') : b.status}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    b.status === 'PENDING'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                    {b.status === 'PENDING' ? t.home.pending : (language === 'ar' ? 'مؤكدة' : 'Confirmée')}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-xl">
-                  Programmée
-                </span>
+
+                {/* Details box */}
+                <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2 text-xs text-slate-700 text-start">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
+                    <span><strong>{t.home.pickup}:</strong> {b.pickupAddress || t.home.currentPosition}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-slate-900 shrink-0" />
+                    <span><strong>{t.home.destination}:</strong> {b.destinationAddress || b.dropoffAddress || t.home.notSpecified}</span>
+                  </div>
+                  {b.scheduledAt && (
+                    <div className="flex items-center gap-2 pt-1 border-t border-amber-200/40 text-amber-900 font-medium">
+                      <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <span><strong>{t.home.plannedOn}:</strong> {new Date(b.scheduledAt).toLocaleString(language === 'ar' ? 'ar-DZ' : 'fr-FR')}</span>
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-amber-200/50 flex justify-between items-center font-bold text-slate-900">
+                    <span>{t.home.estimatedFare}</span>
+                    <span className="text-amber-600 text-sm font-extrabold">{b.estimatedPrice || 150} {t.home.currency}</span>
+                  </div>
+                </div>
+
+                {/* Pending CCP Notice & WhatsApp Contact Button */}
+                {b.status === 'PENDING' && (
+                  <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 p-3.5 space-y-2.5 text-xs text-start">
+                    <div className="flex items-center gap-2 font-black text-amber-950">
+                      <Banknote className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>{language === 'ar' ? '⚠️ تحويل العربون عبر CCP مطلوب لتأكيد الرحلة' : '⚠️ Versement CCP requis pour confirmer'}</span>
+                    </div>
+                    <p className="text-[11px] text-amber-900 leading-relaxed font-semibold">
+                      {language === 'ar'
+                        ? `طلبك مسجل بنجاح. يرجى العلم بأن السائق لن يؤكد الرحلة ولن يقبلها إلا بعد أن تتواصل معه عبر واتساب وتحول العربون إلى حسابه البريدي الجاري CCP (${driver.phoneNumber || '0555123456'}).`
+                        : `Votre demande est enregistrée. Le chauffeur ne confirmera PAS cette course tant que vous ne l'avez pas contacté sur WhatsApp pour lui verser l'acompte sur son compte CCP (${driver.phoneNumber || '0555123456'}).`}
+                    </p>
+                    <a
+                      href={`https://wa.me/${(driver.phoneNumber || '0555123456').replace(/\D/g, '')}?text=${encodeURIComponent(
+                        language === 'ar'
+                          ? `مرحباً كابتن زكريا، بخصوص طلبي المبرمج رقم #${b.id.slice(0, 8)} (${b.destinationAddress || ''}) بمبلغ ${b.estimatedPrice || ''} دج : أود إرسال العربون إلى حسابك البريدي CCP لتأكيد الرحلة. يرجى تزويدي برقم حسابك CCP.`
+                          : `Bonjour Capitaine Zakaria, concernant ma réservation #${b.id.slice(0, 8)} (${b.destinationAddress || ''}) d'un montant de ${b.estimatedPrice || ''} DA : je souhaite effectuer le versement de l'acompte sur votre compte CCP pour confirmer la course. Merci de me communiquer votre numéro CCP.`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] text-white text-xs font-black hover:brightness-105 transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'مراسلة السائق على واتساب لتحويل CCP' : 'Contacter sur WhatsApp (Versement CCP)'}</span>
+                    </a>
+                  </div>
+                )}
+
+                {/* Action button */}
+                {b.status === 'PENDING' && (
+                  <button
+                    type="button"
+                    onClick={() => cancelBookingMutation.mutate(b.id)}
+                    disabled={cancelBookingMutation.isPending}
+                    className="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-2xl font-bold text-xs tracking-wider transition-all disabled:opacity-50 cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    {t.home.cancelBooking}
+                  </button>
+                )}
+                {(b.status === 'ACCEPTED' || b.status === 'IN_PROGRESS') && (
+                  <button
+                    type="button"
+                    onClick={() => setShowTrackingMap(true)}
+                    className="w-full bg-[#FF9900] hover:brightness-105 text-slate-950 py-3 rounded-2xl font-extrabold text-xs tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <Car className="h-4 w-4" />
+                    {t.home.showRide}
+                  </button>
+                )}
               </div>
             ))
           ) : (
-            <p className="text-xs text-slate-500 italic py-3 text-center">
-              Aucune réservation programmée à venir.
-            </p>
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-2 shadow-sm">
+              <Calendar className="h-8 w-8 text-slate-300 mx-auto" />
+              <p className="text-xs text-slate-500 font-medium">
+                {t.home.noScheduledRides}
+              </p>
+            </div>
           )}
         </div>
       )}
 
       {/* ── Driver Info & Main Cards (Only shown on main view) ── */}
-      {(activeTab === 'main' || activeTab === 'offers') && (
+      {activeTab === 'main' && (
         <>
           {/* ── 2. Driver Header & Title Card ── */}
-          <div className="text-left mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                {driver.driverName || 'Zakaria boukejar'}
-              </h2>
-              <ShieldCheck className="h-5 w-5 text-amber-500 inline shrink-0" />
+          <div className="text-start mb-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                    {driver.driverName || driver.name || 'Zakaria Boukedjar'}
+                  </h2>
+                  <ShieldCheck className="h-5 w-5 text-amber-500 inline shrink-0" />
+                </div>
+                <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {t.home.driverCertified}
+                </p>
+              </div>
+
+              {/* Direct Call & WhatsApp buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                {(driver.phoneNumber || driver.phone) && (
+                  <a
+                    href={`tel:${driver.phoneNumber || driver.phone}`}
+                    className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:text-amber-600 shadow-xs flex items-center justify-center transition-all"
+                    title={language === 'ar' ? 'اتصال مباشر بالسائق' : 'Appeler le chauffeur'}
+                  >
+                    <Phone className="w-4 h-4 text-amber-600" />
+                  </a>
+                )}
+                {(driver.whatsappNumber || driver.phoneNumber || driver.phone) && (
+                  <a
+                    href={`https://wa.me/${(driver.whatsappNumber || driver.phoneNumber || driver.phone || '').replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm flex items-center justify-center transition-all"
+                    title="WhatsApp"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-              Chauffeur privé VTC certifié • Bordj Bou Arréridj
-            </p>
+
+            {/* Vehicle & Plate Specs Pill */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-xs">
+                <Car className="w-3.5 h-3.5 text-[#FF9900]" />
+                {driver.vehicleMake ? `${driver.vehicleMake} ` : ''}{driver.vehicleModel || 'Golf 7'}
+                {driver.vehicleColor ? ` • ${driver.vehicleColor}` : ''}
+              </span>
+              {driver.vehiclePlate && (
+                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-black bg-amber-100 text-amber-950 border border-amber-300/80 px-2.5 py-1 rounded-xl shadow-xs">
+                  <span className="text-[9px] bg-amber-400/80 px-1 py-0.5 rounded text-slate-950 font-sans font-extrabold">DZ</span>
+                  {driver.vehiclePlate}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* ── 3. Main Info Card (Orange Border Frame) ── */}
-          <div className="bg-white rounded-3xl border-2 border-amber-500 shadow-xl shadow-amber-500/5 text-left overflow-hidden">
+          <div className="bg-white rounded-3xl border-2 border-amber-500 shadow-xl shadow-amber-500/5 text-start overflow-hidden">
             
             {/* Content Section */}
             <div className="p-5 sm:p-6 space-y-4 text-slate-800 text-sm leading-relaxed">
               <div className="space-y-1">
                 <p className="font-bold text-slate-900 text-base">
-                  Votre chauffeur privé à Bordj Bou Arréridj
+                  {t.home.mainCardTitle}
                 </p>
                 <p className="text-xs text-slate-600 font-medium">
-                  Pour tous vos déplacements locaux et longues distances :
+                  {t.home.mainCardSubtitle}
                 </p>
               </div>
 
-              <ul className="space-y-2.5 text-xs text-slate-700 font-medium pl-1">
-                {[
-                  'courses en ville',
-                  'transferts aéroport',
-                  'trajets inter-wilayas',
-                  'excursions vers les plages',
-                  'les sites touristiques.',
-                ].map((service, idx) => (
+              <ul className="space-y-2.5 text-xs text-slate-700 font-medium px-1">
+                {serviceList.map((service, idx) => (
                   <li key={idx} className="flex items-center gap-2.5">
                     <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0" />
                     <span>{service}</span>
@@ -355,41 +549,44 @@ export default function CustomerHomePage() {
               <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-xs text-slate-700 italic space-y-1">
                 <p className="font-semibold text-amber-900 not-italic flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  Service d'Excellence Personnalisé
+                  {t.home.vipTitle}
                 </p>
                 <p>
-                  Profitez d'un service sur-mesure avec mise à disposition à la journée pour vous accompagner et assurer votre retour en toute sérénité.
+                  {t.home.vipText}
                 </p>
               </div>
             </div>
 
-            {/* Side-by-Side Vehicle Gallery Photos */}
-            <div className="grid grid-cols-2 gap-0.5 bg-slate-200 relative border-t border-slate-100">
-              <div className="relative group overflow-hidden">
-                <img
-                  src={car2Url}
-                  alt="Golf 7 vue arrière"
-                  className="w-full h-36 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2.5">
-                  <span className="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-white/20">
-                    Golf 7 — Confort VIP
-                  </span>
+            {/* Dynamic Vehicle Photos Gallery (Driver uploaded photos or defaults) */}
+            <div className="relative border-t border-slate-100 bg-slate-100">
+              {carPhotosList.length === 1 ? (
+                <div
+                  className="relative group overflow-hidden cursor-pointer"
+                  onClick={() => setActivePhotoModal(carPhotosList[0])}
+                >
+                  <img
+                    src={carPhotosList[0]}
+                    alt={driver.vehicleModel || 'Voiture'}
+                    className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                 </div>
-              </div>
-
-              <div className="relative group overflow-hidden">
-                <img
-                  src={car1Url}
-                  alt="Golf 7 vue avant"
-                  className="w-full h-36 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2.5">
-                  <span className="text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-lg border border-white/20">
-                    Climatisation & Wifi
-                  </span>
+              ) : (
+                <div className={`grid ${carPhotosList.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-0.5`}>
+                  {carPhotosList.map((photoUrl, idx) => (
+                    <div
+                      key={idx}
+                      className="relative group overflow-hidden cursor-pointer aspect-[4/3]"
+                      onClick={() => setActivePhotoModal(photoUrl)}
+                    >
+                      <img
+                        src={photoUrl}
+                        alt={`Photo véhicule ${idx + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -400,8 +597,8 @@ export default function CustomerHomePage() {
               onClick={() => setIsBookingModalOpen(true)}
               className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
-              <span>Reserver maintenant</span>
-              <ArrowRight className="h-4 w-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
+              <span>{t.home.bookNow}</span>
+              <ArrowRight className={cn('h-4 w-4 text-slate-950 group-hover:translate-x-1 transition-transform', isRTL && 'rotate-180 group-hover:-translate-x-1')} />
             </button>
           </div>
         </>
@@ -417,7 +614,7 @@ export default function CustomerHomePage() {
             className="z-10 -mb-4 bg-white border-2 border-[#FF9900] text-slate-900 font-extrabold text-sm px-8 py-2.5 rounded-full shadow-md hover:bg-amber-50 transition-all flex items-center gap-2 cursor-pointer"
           >
             <Tag className="h-4 w-4 text-[#FF9900]" />
-            <span>Nos offres</span>
+            <span>{t.home.ourOffers}</span>
             {announcements.length > 0 && (
               <span className="bg-[#FF9900] text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">
                 {announcements.length}
@@ -426,7 +623,7 @@ export default function CustomerHomePage() {
           </button>
 
           {/* Solid Orange Background Container */}
-          <div className="w-full bg-[#FF9900] rounded-3xl p-6 pt-10 text-left text-slate-950 space-y-4 shadow-lg">
+          <div className="w-full bg-[#FF9900] rounded-3xl p-6 pt-10 text-start text-slate-950 space-y-4 shadow-lg">
             {announcements.length > 0 ? (
               announcements.map((ann: any) => (
                 <div
@@ -439,7 +636,7 @@ export default function CustomerHomePage() {
                     </h4>
                     {ann.price != null && (
                       <span className="font-black text-amber-600 text-sm whitespace-nowrap bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
-                        {ann.price.toLocaleString('fr-DZ')} DA
+                        {ann.price.toLocaleString(language === 'ar' ? 'ar-DZ' : 'fr-DZ')} {t.home.currency}
                       </span>
                     )}
                   </div>
@@ -450,19 +647,19 @@ export default function CustomerHomePage() {
 
                   <button
                     type="button"
-                    onClick={() => setIsBookingModalOpen(true)}
+                    onClick={() => setSelectedOffer(ann)}
                     className="w-full bg-slate-900 hover:bg-black text-white rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <span>Réserver cette offre</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <span>{t.home.bookThisOffer}</span>
+                    <ArrowRight className={cn('h-3.5 w-3.5', isRTL && 'rotate-180')} />
                   </button>
                 </div>
               ))
             ) : (
               <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-5 text-center text-slate-950 space-y-1.5">
-                <p className="font-bold text-sm">Service de Transport VIP & Excursions</p>
+                <p className="font-bold text-sm">{t.home.offersFallbackTitle}</p>
                 <p className="text-xs text-slate-900/80">
-                  Disponibilité 7j/7 pour vos déplacements urbains, transferts aéroport et trajets inter-wilayas.
+                  {t.home.offersFallbackText}
                 </p>
               </div>
             )}
@@ -470,14 +667,17 @@ export default function CustomerHomePage() {
         </div>
       )}
 
-      {/* ── Booking Modal Drawer ── */}
+      {/* ── Regular Booking Modal Drawer ── */}
       {isBookingModalOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end justify-center transition-all duration-300">
-          <div className="bg-white w-full max-w-lg rounded-t-[36px] px-6 pt-6 pb-10 shadow-2xl relative text-left" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="bg-white w-full max-w-lg rounded-t-[36px] px-6 pt-6 pb-10 shadow-2xl relative text-start" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <button
               type="button"
               onClick={() => setIsBookingModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all cursor-pointer"
+              className={cn(
+                'absolute top-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all cursor-pointer',
+                isRTL ? 'left-5' : 'right-5'
+              )}
             >
               <X className="h-5 w-5" />
             </button>
@@ -487,7 +687,7 @@ export default function CustomerHomePage() {
                 <Car className="h-5 w-5" />
               </div>
               <h3 className="text-lg font-bold text-slate-900">
-                Réserver votre chauffeur VTC
+                {t.home.bookDriverModalTitle}
               </h3>
             </div>
 
@@ -495,8 +695,70 @@ export default function CustomerHomePage() {
               onBooked={() => {
                 setIsBookingModalOpen(false);
                 refetchBookings();
+                setActiveTab('scheduled');
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Offer Booking Modal Drawer ── */}
+      {selectedOffer && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end justify-center transition-all duration-300">
+          <div className="bg-white w-full max-w-lg rounded-t-[36px] px-6 pt-6 pb-10 shadow-2xl relative text-start" style={{ maxHeight: '92vh', overflowY: 'auto' }}>
+            <button
+              type="button"
+              onClick={() => setSelectedOffer(null)}
+              className={cn(
+                'absolute top-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all cursor-pointer',
+                isRTL ? 'left-5' : 'right-5'
+              )}
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-5">
+              <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+                <Tag className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">
+                {language === 'ar' ? 'حجز العرض' : "Réserver l'offre"}
+              </h3>
+            </div>
+
+            <OfferBookingCard
+              offer={selectedOffer}
+              onBooked={() => {
+                setSelectedOffer(null);
+                refetchBookings();
+                setActiveTab('scheduled');
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {/* ── Vehicle Photo Zoom Modal (Lightbox) ── */}
+      {activePhotoModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setActivePhotoModal(null)}
+        >
+          <div
+            className="relative max-w-lg w-full bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activePhotoModal}
+              alt="Photo du véhicule"
+              className="w-full h-auto max-h-[80vh] object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setActivePhotoModal(null)}
+              className="absolute top-3 right-3 p-2 bg-black/70 hover:bg-black/90 text-white rounded-full transition-all cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
       )}

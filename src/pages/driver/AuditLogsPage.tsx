@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
+import { useTranslation } from '@/store/languageStore';
 import { ScrollText, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface AuditLogItem {
   id: string;
@@ -11,9 +13,9 @@ interface AuditLogItem {
   createdAt: string;
 }
 
-function formatDate(dateStr: string) {
+function formatLocalizedDate(dateStr: string, lang: string = 'fr') {
   try {
-    return new Intl.DateTimeFormat('fr-FR', {
+    return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -28,6 +30,7 @@ function formatDate(dateStr: string) {
 
 export default function DriverAuditLogsPage() {
   const [page, setPage] = useState<number>(1);
+  const { t, language, isRTL } = useTranslation();
 
   const { data: res, isLoading, isError, refetch } = useQuery({
     queryKey: ['driverAuditLogs', page],
@@ -44,13 +47,13 @@ export default function DriverAuditLogsPage() {
   const pagination = (rawData as any)?.pagination ?? { page: 1, totalPages: 1 };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-left">
+    <div className="min-h-screen bg-[#F8F9FA] pb-8 pt-7 px-5 max-w-lg mx-auto space-y-5 text-start">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-          Journal d'Audit Système
+          {t.driver.auditLogs.title}
         </h1>
         <p className="text-xs text-slate-500 mt-0.5 font-medium">
-          Historique immuable des actions de sécurité et modifications plateforme
+          {t.driver.auditLogs.subtitle}
         </p>
       </div>
 
@@ -74,13 +77,13 @@ export default function DriverAuditLogsPage() {
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-center space-y-2">
           <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
           <p className="text-xs text-rose-700 font-medium">
-            Impossible de charger le journal d'audit.
+            {t.common.error}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl"
+            className="px-4 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-xl cursor-pointer"
           >
-            Réessayer
+            {t.common.confirm}
           </button>
         </div>
       )}
@@ -93,10 +96,10 @@ export default function DriverAuditLogsPage() {
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">
-              Aucune entrée dans le journal
+              {t.driver.auditLogs.noLogs}
             </h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto font-medium">
-              Les événements système et actions d'administration apparaîtront ici.
+              {t.driver.auditLogs.noLogsDesc}
             </p>
           </div>
         </div>
@@ -109,7 +112,7 @@ export default function DriverAuditLogsPage() {
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-xs space-y-2 text-left"
+                className="p-4 bg-white rounded-[22px] border border-slate-100 shadow-xs space-y-2 text-start"
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
@@ -123,12 +126,12 @@ export default function DriverAuditLogsPage() {
                     )}
                   </div>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    {formatDate(log.createdAt)}
+                    {formatLocalizedDate(log.createdAt, language)}
                   </span>
                 </div>
 
                 {log.details && (
-                  <pre className="text-[11px] text-slate-700 bg-slate-50 p-2.5 rounded-xl font-mono overflow-x-auto border border-slate-100">
+                  <pre className="text-[11px] text-slate-700 bg-slate-50 p-2.5 rounded-xl font-mono overflow-x-auto border border-slate-100 text-left">
                     {typeof log.details === 'object'
                       ? JSON.stringify(log.details, null, 2)
                       : String(log.details)}
@@ -144,19 +147,19 @@ export default function DriverAuditLogsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" /> Précédent
+                <ChevronLeft className={cn('w-4 h-4', isRTL && 'rotate-180')} /> {language === 'ar' ? 'السابق' : 'Précédent'}
               </button>
               <span className="text-slate-400 font-bold">
-                Page {page} / {pagination.totalPages}
+                {language === 'ar' ? `صفحة ${page} من ${pagination.totalPages}` : `Page ${page} / ${pagination.totalPages}`}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={page >= pagination.totalPages}
-                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white"
+                className="px-3 py-1.5 rounded-xl border border-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1 bg-white cursor-pointer"
               >
-                Suivant <ChevronRight className="w-4 h-4" />
+                {language === 'ar' ? 'التالي' : 'Suivant'} <ChevronRight className={cn('w-4 h-4', isRTL && 'rotate-180')} />
               </button>
             </div>
           )}

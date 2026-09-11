@@ -3,18 +3,25 @@ import type { Booking } from '@/types/booking.types';
 import type { ApiResponse } from '@/types/api.types';
 
 export interface DriverProfile {
-  id: string;
-  name: string | null;
+  id?: string;
+  name?: string | null;
   driverName?: string | null;
-  phone: string;
+  phone?: string;
   phoneNumber?: string | null;
+  whatsappNumber?: string | null;
   vehicleMake?: string | null;
   vehicleModel?: string | null;
   vehicleColor?: string | null;
   vehiclePlate?: string | null;
+  ccpNumber?: string | null;
+  ccpKey?: string | null;
+  carPhotos?: string[] | null;
   bio?: string | null;
   avatarUrl?: string | null;
+  profilePhoto?: string | null;
   rating?: number | null;
+  ratingAverage?: number | null;
+  totalTrips?: number | null;
   isOnline?: boolean;
   workingHours?: string | null;
   description?: string | null;
@@ -74,6 +81,9 @@ export const DriverService = {
 
   getPricing: () =>
     apiClient.get<ApiResponse<DriverPricing>>('/driver/pricing'),
+
+  getPublicPricing: () =>
+    apiClient.get<ApiResponse<DriverPricing>>('/public/pricing'),
 
   updatePricing: (data: { cityFlatFare?: number; outsideRatePerKm?: number }) =>
     apiClient.patch<ApiResponse<DriverPricing>>('/driver/pricing', data),

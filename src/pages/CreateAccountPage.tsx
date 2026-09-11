@@ -9,6 +9,7 @@ import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 import { Calendar, Eye, EyeOff, Lock, Phone, User } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
+import { useTranslation } from '@/store/languageStore';
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -27,6 +28,7 @@ export default function CreateAccountPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [showPassword, setShowPassword] = useState(false);
+  const { t, language } = useTranslation();
 
   const {
     register,
@@ -47,19 +49,29 @@ export default function CreateAccountPage() {
     onSuccess: (res) => {
       const { token, user } = res.data.data!;
       setAuth(token, user);
-      toast.success('Compte créé avec succès ! Bienvenue sur ZAXI.');
+      toast.success(
+        language === 'ar'
+          ? 'تم إنشاء الحساب بنجاح ! مرحباً بك في ZAXI.'
+          : 'Compte créé avec succès ! Bienvenue sur ZAXI.'
+      );
       navigate('/', { replace: true });
     },
     onError: (err: any) => {
-      let msg = "Erreur lors de l'inscription.";
+      let msg = language === 'ar' ? 'حدث خطأ أثناء التسجيل.' : "Erreur lors de l'inscription.";
       const resData = err.response?.data;
       if (resData) {
         if (resData.message === 'Account already exists for this phone number') {
-          msg = 'Un compte existe déjà avec ce numéro de téléphone.';
+          msg = language === 'ar'
+            ? 'يوجد حساب مسجل بهذا الرقم من قبل.'
+            : 'Un compte existe déjà avec ce numéro de téléphone.';
         } else if (resData.message === 'Invalid phone number format') {
-          msg = 'Format de numéro de téléphone invalide. (ex: 0555123456)';
+          msg = language === 'ar'
+            ? 'صيغة رقم الهاتف غير صحيحة. (مثال: 0555123456)'
+            : 'Format de numéro de téléphone invalide. (ex: 0555123456)';
         } else if (resData.message === 'Invalid date of birth format') {
-          msg = 'Format de date de naissance invalide.';
+          msg = language === 'ar'
+            ? 'صيغة تاريخ الميلاد غير صحيحة.'
+            : 'Format de date de naissance invalide.';
         } else if (resData.errors && Array.isArray(resData.errors) && resData.errors.length > 0) {
           msg = resData.errors[0].message || resData.message || msg;
         } else if (resData.message) {
@@ -86,6 +98,7 @@ export default function CreateAccountPage() {
         maxWidth: '448px',
         margin: '0 auto',
         position: 'relative',
+        direction: language === 'ar' ? 'rtl' : 'ltr',
       }}
     >
       {/* Top Logo */}
@@ -102,11 +115,7 @@ export default function CreateAccountPage() {
         <img
           src={logoUrl}
           alt="ZAXI"
-          style={{
-            width: '200px',
-            height: 'auto',
-            objectFit: 'contain',
-          }}
+          style={{ width: '200px', height: 'auto', objectFit: 'contain' }}
         />
       </div>
 
@@ -129,37 +138,20 @@ export default function CreateAccountPage() {
             letterSpacing: '0.3px',
           }}
         >
-          créer un compte
+          {t.auth.registerTitle}
         </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Name input */}
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                borderRadius: '14px',
-                padding: '0 14px',
-              }}
-            >
-              <User style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <User style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
-                placeholder="Entrez votre nom ..."
+                placeholder={t.auth.namePlaceholder}
                 disabled={registerMutation.isPending}
                 {...register('name')}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  color: '#333',
-                  padding: '14px 0',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500, textAlign: language === 'ar' ? 'right' : 'left' }}
               />
             </div>
             {errors.name && (
@@ -171,36 +163,17 @@ export default function CreateAccountPage() {
 
           {/* Phone input */}
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                borderRadius: '14px',
-                padding: '0 14px',
-              }}
-            >
-              <Phone style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <Phone style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Numéro de téléphone ..."
+                placeholder={t.auth.phonePlaceholder}
                 disabled={registerMutation.isPending}
                 {...register('phone', {
-                  onChange: (e) => {
-                    e.target.value = e.target.value.replace(/\s+/g, '');
-                  },
+                  onChange: (e) => { e.target.value = e.target.value.replace(/\s+/g, ''); },
                 })}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  color: '#333',
-                  padding: '14px 0',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}
               />
             </div>
             {errors.phone && (
@@ -212,31 +185,14 @@ export default function CreateAccountPage() {
 
           {/* Date of Birth input */}
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                borderRadius: '14px',
-                padding: '0 14px',
-              }}
-            >
-              <Calendar style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <Calendar style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="date"
-                placeholder="Date de naissance ..."
+                placeholder={language === 'ar' ? 'تاريخ الميلاد...' : 'Date de naissance ...'}
                 disabled={registerMutation.isPending}
                 {...register('dateOfBirth')}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  color: '#333',
-                  padding: '14px 0',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}
               />
             </div>
             {errors.dateOfBirth && (
@@ -246,34 +202,16 @@ export default function CreateAccountPage() {
             )}
           </div>
 
-
           {/* Password input */}
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                borderRadius: '14px',
-                padding: '0 14px',
-              }}
-            >
-              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Mot de passe ..."
+                placeholder={t.auth.passwordPlaceholder}
                 disabled={registerMutation.isPending}
                 {...register('password')}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  color: '#333',
-                  padding: '14px 0',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}
               />
               <button
                 type="button"
@@ -309,7 +247,7 @@ export default function CreateAccountPage() {
                 opacity: registerMutation.isPending ? 0.5 : 1,
               }}
             >
-              {registerMutation.isPending ? 'Création...' : 'Entrer'}
+              {registerMutation.isPending ? t.common.loading : t.auth.registerBtn}
             </button>
           </div>
 
@@ -317,14 +255,9 @@ export default function CreateAccountPage() {
           <div style={{ textAlign: 'center', marginTop: '8px' }}>
             <Link
               to="/login"
-              style={{
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 600,
-                textDecoration: 'underline',
-              }}
+              style={{ color: '#fff', fontSize: '12px', fontWeight: 600, textDecoration: 'underline' }}
             >
-              Déjà un compte ? Se connecter
+              {t.auth.alreadyHaveAccount} {t.auth.loginLink}
             </Link>
           </div>
         </form>

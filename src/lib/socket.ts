@@ -55,6 +55,8 @@ export type SocketEvents = {
   'announcement:new': object;
   'announcement:updated': object;
   'announcement:removed': { id: string };
+  // Pricing updates in real time
+  'pricing:updated': { cityFlatFare: number; outsideRatePerKm: number };
   // Driver info
   'driver:phone_available': { bookingId: string; phone: string };
 };

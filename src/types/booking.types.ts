@@ -27,10 +27,12 @@ export interface BookingEstimateRequest {
   pickup: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
   destination: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
 }
 
@@ -54,6 +56,9 @@ export interface CreateBookingPayload {
     address: string;
   };
   scheduledAt?: string;
+  offerPrice?: number;
+  notes?: string;
+  announcementId?: string;
 }
 
 // ─── Booking ──────────────────────────────────────────────────────────────────

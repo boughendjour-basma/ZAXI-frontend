@@ -12,7 +12,7 @@ import type { ApiResponse } from '@/types/api.types';
 export const BookingService = {
   /** Get price + distance estimate before booking */
   getEstimate: (data: BookingEstimateRequest) =>
-    apiClient.post<BookingEstimate>('/bookings/estimate', data),
+    apiClient.post<BookingEstimate>('/public/estimate', data),
 
   /** Create a new booking */
   createBooking: (data: CreateBookingPayload) =>

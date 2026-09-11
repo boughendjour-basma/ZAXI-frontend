@@ -12,6 +12,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2021,
+        React: 'readonly',
+        google: 'readonly',
       },
       parserOptions: {
         ecmaVersion: 'latest',

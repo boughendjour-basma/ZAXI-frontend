@@ -22,6 +22,8 @@ import { cn } from '@/utils/cn';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuthStore } from '@/store/authStore';
+import { useTranslation } from '@/store/languageStore';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import logoUrl from '@/assets/logo.png';
 
 interface NavItem {
@@ -30,29 +32,30 @@ interface NavItem {
   icon: ReactNode;
 }
 
-const navItems: NavItem[] = [
-  { to: '/driver/dashboard', label: 'Tableau de bord', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { to: '/driver/today', label: "Aujourd'hui", icon: <Car className="h-5 w-5" /> },
-  { to: '/driver/history', label: 'Historique', icon: <History className="h-5 w-5" /> },
-  { to: '/driver/customers', label: 'Clients', icon: <Users className="h-5 w-5" /> },
-  { to: '/driver/pricing', label: 'Tarification', icon: <DollarSign className="h-5 w-5" /> },
-  { to: '/driver/announcements', label: 'Annonces', icon: <Megaphone className="h-5 w-5" /> },
-  { to: '/driver/statistics', label: 'Statistiques', icon: <BarChart3 className="h-5 w-5" /> },
-  { to: '/driver/audit-logs', label: "Logs d'audit", icon: <ScrollText className="h-5 w-5" /> },
-  { to: '/driver/settings', label: 'Paramètres', icon: <Settings className="h-5 w-5" /> },
-];
-
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { logout } = useAuth();
   const user = useAuthStore((s) => s.user);
+  const { t, isRTL } = useTranslation();
+
+  const navItems: NavItem[] = [
+    { to: '/driver/dashboard', label: t.nav.dashboard, icon: <LayoutDashboard className="h-5 w-5" /> },
+    { to: '/driver/today', label: t.nav.today, icon: <Car className="h-5 w-5" /> },
+    { to: '/driver/history', label: t.nav.history, icon: <History className="h-5 w-5" /> },
+    { to: '/driver/customers', label: t.nav.customers, icon: <Users className="h-5 w-5" /> },
+    { to: '/driver/pricing', label: t.nav.pricing, icon: <DollarSign className="h-5 w-5" /> },
+    { to: '/driver/announcements', label: t.nav.announcements, icon: <Megaphone className="h-5 w-5" /> },
+    { to: '/driver/statistics', label: t.nav.statistics, icon: <BarChart3 className="h-5 w-5" /> },
+    { to: '/driver/audit-logs', label: t.nav.auditLogs, icon: <ScrollText className="h-5 w-5" /> },
+    { to: '/driver/settings', label: t.nav.settings, icon: <Settings className="h-5 w-5" /> },
+  ];
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white text-start">
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#FFE0A0]">
         <img src={logoUrl} alt="ZAXI" className="h-9 w-auto object-contain" />
         <span className="text-[10px] text-[#FF9900] font-bold uppercase tracking-wide bg-[#FFF3D6] px-2 py-0.5 rounded-full border border-[#FFE0A0]">
-          Driver
+          {t.nav.driverTag}
         </span>
       </div>
 
@@ -62,7 +65,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <Avatar name={user?.name} size="md" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[#1A1A1A] truncate">
-              {user?.name ?? 'Driver'}
+              {user?.name ?? t.header.driver}
             </p>
             <p className="text-xs text-[#888] truncate">{user?.phone}</p>
           </div>
@@ -90,21 +93,25 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               <>
                 <span className={cn('shrink-0', !isActive && 'group-hover:scale-110 transition-transform')}>{icon}</span>
                 <span className="flex-1">{label}</span>
-                {isActive && <ChevronRight className="h-4 w-4 opacity-60" />}
+                {isActive && <ChevronRight className={cn('h-4 w-4 opacity-60', isRTL && 'rotate-180')} />}
               </>
             )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="px-3 py-4 border-t border-[#FFE0A0]">
+      {/* Footer: Language Switcher above Logout */}
+      <div className="px-3 py-3 border-t border-[#FFE0A0] space-y-2">
+        {/* Language Switcher */}
+        <LanguageSelector />
+
+        {/* Logout Button */}
         <button
           onClick={() => logout()}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium text-rose-500 hover:bg-rose-50 transition-all duration-200"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium text-rose-500 hover:bg-rose-50 transition-all duration-200 cursor-pointer"
         >
-          <LogOut className="h-5 w-5" />
-          Déconnexion
+          <LogOut className={cn('h-5 w-5', isRTL && 'rotate-180')} />
+          <span>{t.nav.logout}</span>
         </button>
       </div>
     </div>
@@ -116,6 +123,7 @@ export function DriverDashboardLayout() {
   const user = useAuthStore((s) => s.user);
   const isOnlineFromStore = useDriverStore((s) => s.isOnline);
   const setOnlineInStore = useDriverStore((s) => s.setOnline);
+  const { t } = useTranslation();
 
   const { data: profileRes } = useQuery({
     queryKey: ['driverProfileAvailability'],
@@ -183,7 +191,7 @@ export function DriverDashboardLayout() {
                 className="text-lg sm:text-xl font-black text-slate-950 tracking-normal leading-tight text-left truncate"
                 style={{ fontFamily: "'Libre Bodoni', Georgia, serif" }}
               >
-                Bienvenue&nbsp;{user?.name || 'Chauffeur'}
+                {t.header.welcome}&nbsp;{user?.name || t.header.driver}
               </h1>
             </div>
 
@@ -197,7 +205,7 @@ export function DriverDashboardLayout() {
                   )}
                 />
                 <span className="text-xs sm:text-[13px] font-bold text-slate-950 tracking-tight select-none">
-                  {driverIsOnline ? 'Disponible' : 'Indisponible'}
+                  {driverIsOnline ? t.header.available : t.header.unavailable}
                 </span>
               </div>
             </div>

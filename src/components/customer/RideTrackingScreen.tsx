@@ -6,8 +6,10 @@ import { BookingService } from '@/services/booking.service';
 import { useSocket } from '@/hooks/useSocket';
 import { joinBookingRoom, leaveBookingRoom } from '@/lib/socket';
 import type { Booking, DriverLocation } from '@/types/booking.types';
+import { useTranslation } from '@/store/languageStore';
 import { Phone, X, Clock, MapPin, Navigation, ChevronRight, Car, Home } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { cn } from '@/utils/cn';
 
 interface RideTrackingScreenProps {
   booking: Booking;
@@ -20,14 +22,6 @@ interface RideTrackingScreenProps {
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: 'En attente…',
-  ACCEPTED: 'Chauffeur en route',
-  IN_PROGRESS: 'Course en cours',
-  COMPLETED: 'Arrivé',
-  CANCELLED: 'Annulée',
-};
-
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#F59E0B',
   ACCEPTED: '#3B82F6',
@@ -36,12 +30,6 @@ const STATUS_COLOR: Record<string, string> = {
   CANCELLED: '#EF4444',
 };
 
-/**
- * RideTrackingScreen — Full-screen tracking view shown ONLY after a booking is accepted.
- *
- * Google Maps is loaded here and only here on the customer side.
- * The driver marker updates in real-time via the 'driver:location:update' socket event.
- */
 export function RideTrackingScreen({
   booking,
   driverName,
@@ -52,6 +40,15 @@ export function RideTrackingScreen({
 }: RideTrackingScreenProps) {
   const queryClient = useQueryClient();
   const { useSocketEvent } = useSocket();
+  const { t, language, isRTL } = useTranslation();
+
+  const STATUS_LABEL: Record<string, string> = {
+    PENDING: t.history.statusPending,
+    ACCEPTED: t.history.statusDriverArriving,
+    IN_PROGRESS: t.history.statusInProgress,
+    COMPLETED: t.history.statusCompleted,
+    CANCELLED: t.history.statusCancelled,
+  };
 
   const [driverPos, setDriverPos] = useState<{ lat: number; lng: number } | null>(null);
   const [eta, setEta] = useState<string | null>(null);
@@ -87,7 +84,7 @@ export function RideTrackingScreen({
           setIsStale(false);
         }
       })
-      .catch(() => {}); // silent — socket will fill in shortly
+      .catch(() => {});
   }, [booking.id]);
 
   // Periodically check if driver location updates are stale (> 30s)
@@ -95,7 +92,6 @@ export function RideTrackingScreen({
     const interval = setInterval(() => {
       if (Date.now() - lastUpdateTimestamp > 30000) {
         setIsStale(true);
-        // Attempt REST API fallback refetch
         BookingService.getDriverLocation(booking.id)
           .then((res) => {
             const loc = res.data?.data;
@@ -130,21 +126,21 @@ export function RideTrackingScreen({
           Math.sin(dLng / 2) ** 2;
       const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const minutes = Math.max(1, Math.round((dist / 30) * 60));
-      setEta(`~${minutes} min`);
+      setEta(`~${minutes} ${t.common.minutes}`);
     } else {
       setEta(null);
     }
-  }, [booking.id, booking.status, pickupLat, pickupLng, driverPos]));
+  }, [booking.id, booking.status, pickupLat, pickupLng, driverPos, t.common.minutes]));
 
   // Cancel booking
   const cancelMutation = useMutation({
     mutationFn: () => BookingService.cancelBooking(booking.id),
     onSuccess: () => {
-      toast.success('Réservation annulée.');
+      toast.success(language === 'ar' ? 'تم إلغاء الحجز.' : 'Réservation annulée.');
       queryClient.invalidateQueries({ queryKey: ['myBookings'] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Erreur lors de l'annulation.");
+      toast.error(err.response?.data?.message || (language === 'ar' ? 'حدث خطأ أثناء الإلغاء.' : "Erreur lors de l'annulation."));
     },
   });
 
@@ -180,7 +176,7 @@ export function RideTrackingScreen({
           >
             {/* Driver marker */}
             {driverPos && (
-              <AdvancedMarker position={driverPos} title="Votre chauffeur">
+              <AdvancedMarker position={driverPos} title={driverName}>
                 <div
                   style={{
                     background: '#FF9900',
@@ -200,12 +196,12 @@ export function RideTrackingScreen({
             )}
 
             {/* Pickup marker */}
-            <AdvancedMarker position={pickupPos} title="Votre position">
+            <AdvancedMarker position={pickupPos} title={t.home.pickup}>
               <Pin background="#22C55E" borderColor="#fff" glyphColor="#fff" />
             </AdvancedMarker>
 
             {/* Destination marker */}
-            <AdvancedMarker position={destPos} title="Destination">
+            <AdvancedMarker position={destPos} title={t.home.destination}>
               <Pin background="#111" borderColor="#fff" glyphColor="#fff" />
             </AdvancedMarker>
           </Map>
@@ -218,7 +214,7 @@ export function RideTrackingScreen({
             style={{
               position: 'absolute',
               top: 16,
-              left: 16,
+              ...(isRTL ? { right: 16 } : { left: 16 }),
               zIndex: 20,
               background: '#fff',
               color: '#111',
@@ -233,10 +229,10 @@ export function RideTrackingScreen({
               border: 'none',
               cursor: 'pointer',
             }}
-            title="Retour à l'accueil"
+            title={t.tracking.backToHome}
           >
             <Home style={{ width: 16, height: 16, color: '#FF9900' }} />
-            <span>Accueil</span>
+            <span>{t.nav.home}</span>
           </button>
         )}
 
@@ -285,7 +281,7 @@ export function RideTrackingScreen({
               zIndex: 30,
             }}
           >
-            ⚠️ Signal GPS chauffeur en attente de mise à jour...
+            ⚠️ {language === 'ar' ? 'جاري تحديث إشارة GPS للسائق...' : 'Signal GPS chauffeur en attente de mise à jour...'}
           </div>
         )}
       </div>
@@ -301,6 +297,7 @@ export function RideTrackingScreen({
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
+          textAlign: isRTL ? 'right' : 'left',
         }}
       >
         {/* Driver info */}
@@ -341,7 +338,7 @@ export function RideTrackingScreen({
               boxShadow: '0 4px 12px rgba(34,197,94,0.4)',
               flexShrink: 0,
             }}
-            title="Appeler le chauffeur"
+            title={t.tracking.call}
           >
             <Phone style={{ width: 18, height: 18 }} />
           </a>
@@ -361,19 +358,19 @@ export function RideTrackingScreen({
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
             <MapPin style={{ color: '#22C55E', width: 14, height: 14, marginTop: 2, flexShrink: 0 }} />
             <div>
-              <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Départ</p>
+              <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.home.pickup}</p>
               <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#222' }}>
                 {booking.pickupAddress || `${pickupLat.toFixed(4)}, ${pickupLng.toFixed(4)}`}
               </p>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: 2 }}>
-            <ChevronRight style={{ color: '#DDD', width: 12, height: 12 }} />
+            <ChevronRight className={cn('w-3 h-3 text-slate-300', isRTL && 'rotate-180')} />
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
             <Navigation style={{ color: '#111', width: 14, height: 14, marginTop: 2, flexShrink: 0 }} />
             <div>
-              <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Destination</p>
+              <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.home.destination}</p>
               <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#222' }}>
                 {booking.dropoffAddress || booking.destinationAddress || `${dropoffLat.toFixed(4)}, ${dropoffLng.toFixed(4)}`}
               </p>
@@ -384,9 +381,9 @@ export function RideTrackingScreen({
         {/* Price + ETA row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#AAA', textTransform: 'uppercase' }}>Tarif estimé</p>
+            <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#AAA', textTransform: 'uppercase' }}>{t.home.estimatedFare}</p>
             <p style={{ margin: 0, fontSize: '22px', fontWeight: 900, color: '#111' }}>
-              {booking.estimatedPrice ?? 150} DA
+              {booking.estimatedPrice ?? 150} {t.common.currency}
             </p>
           </div>
           {eta && (
@@ -419,7 +416,7 @@ export function RideTrackingScreen({
             }}
           >
             <X style={{ width: 14, height: 14 }} />
-            {cancelMutation.isPending ? 'Annulation…' : 'Annuler la réservation'}
+            {cancelMutation.isPending ? t.common.loading : t.tracking.cancelRide}
           </button>
         )}
       </div>

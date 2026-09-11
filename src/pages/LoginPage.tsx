@@ -9,6 +9,7 @@ import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 import { Eye, EyeOff, Lock, Phone } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
+import { useTranslation } from '@/store/languageStore';
 
 const loginSchema = z.object({
   phone: z
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [showPassword, setShowPassword] = useState(false);
+  const { t, language } = useTranslation();
 
   const {
     register,
@@ -40,7 +42,7 @@ export default function LoginPage() {
     onSuccess: (res) => {
       const { token, user } = res.data.data!;
       setAuth(token, user);
-      toast.success(`Bienvenue, ${user.name || 'Utilisateur'} !`);
+      toast.success(`${t.header.welcome}, ${user.name || (language === 'ar' ? 'مستخدم' : 'Utilisateur')} !`);
       if (user.role === 'DRIVER') {
         navigate('/driver/dashboard', { replace: true });
       } else {
@@ -51,7 +53,7 @@ export default function LoginPage() {
       const msg =
         err.response?.data?.errors?.[0]?.message ||
         err.response?.data?.message ||
-        'Identifiants incorrects.';
+        (language === 'ar' ? 'بيانات الدخول غير صحيحة.' : 'Identifiants incorrects.');
       toast.error(msg);
     },
   });
@@ -70,6 +72,7 @@ export default function LoginPage() {
         maxWidth: '448px',
         margin: '0 auto',
         position: 'relative',
+        direction: language === 'ar' ? 'rtl' : 'ltr',
       }}
     >
       {/* Top Logo */}
@@ -113,7 +116,7 @@ export default function LoginPage() {
             letterSpacing: '0.3px',
           }}
         >
-          se connecter
+          {t.auth.loginTitle}
         </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -128,11 +131,11 @@ export default function LoginPage() {
                 padding: '0 14px',
               }}
             >
-              <Phone style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+              <Phone style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Numéro de téléphone ..."
+                placeholder={t.auth.phonePlaceholder}
                 disabled={loginMutation.isPending}
                 {...register('phone', {
                   onChange: (e) => {
@@ -148,6 +151,7 @@ export default function LoginPage() {
                   outline: 'none',
                   fontSize: '13px',
                   fontWeight: 500,
+                  textAlign: language === 'ar' ? 'right' : 'left',
                 }}
               />
             </div>
@@ -169,10 +173,10 @@ export default function LoginPage() {
                 padding: '0 14px',
               }}
             >
-              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: 8 }} />
+              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Mot de passe ..."
+                placeholder={t.auth.passwordPlaceholder}
                 disabled={loginMutation.isPending}
                 {...register('password')}
                 style={{
@@ -220,7 +224,7 @@ export default function LoginPage() {
                 opacity: loginMutation.isPending ? 0.5 : 1,
               }}
             >
-              {loginMutation.isPending ? 'Connexion...' : 'Entrer'}
+              {loginMutation.isPending ? t.common.loading : t.auth.loginBtn}
             </button>
           </div>
 
@@ -235,7 +239,7 @@ export default function LoginPage() {
                 textDecoration: 'underline',
               }}
             >
-              Mot de passe oublié ?
+              {t.auth.forgotPasswordLink}
             </Link>
             <Link
               to="/create-account"
@@ -246,7 +250,7 @@ export default function LoginPage() {
                 textDecoration: 'underline',
               }}
             >
-              Pas encore de compte ? S'inscrire
+              {t.auth.noAccount} {t.auth.registerLink}
             </Link>
           </div>
         </form>
