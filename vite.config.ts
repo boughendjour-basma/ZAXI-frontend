@@ -20,13 +20,14 @@ function apiProxyPlugin(): Plugin {
 
           for (const [key, value] of Object.entries(req.headers)) {
             const lower = key.toLowerCase();
-            // Strip Origin, Referer, Expect and Content-Length so Render allows requests and fetch doesn't fail
+            // Strip Origin, Referer, Expect, Host, Content-Length and Accept-Encoding
             if (
               lower === 'origin' ||
               lower === 'referer' ||
               lower === 'host' ||
               lower === 'expect' ||
-              lower === 'content-length'
+              lower === 'content-length' ||
+              lower === 'accept-encoding'
             ) {
               continue;
             }
@@ -54,8 +55,14 @@ function apiProxyPlugin(): Plugin {
 
           res.statusCode = backendRes.status;
           backendRes.headers.forEach((val, key) => {
-            // Avoid duplicate CORS headers
-            if (!key.toLowerCase().startsWith('access-control-')) {
+            const lower = key.toLowerCase();
+            // Do not copy content-encoding or length since Node fetch already decompressed the body
+            if (
+              !lower.startsWith('access-control-') &&
+              lower !== 'content-encoding' &&
+              lower !== 'content-length' &&
+              lower !== 'transfer-encoding'
+            ) {
               res.setHeader(key, val);
             }
           });

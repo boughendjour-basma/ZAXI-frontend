@@ -27,6 +27,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    console.error('[API Error]:', error.config?.method?.toUpperCase(), error.config?.url, '-> Status:', error.response?.status, 'Message:', error.message, 'Data:', error.response?.data);
     const status = error.response?.status;
     const pathname = window.location.pathname;
 
