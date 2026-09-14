@@ -17,12 +17,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://zaxi-backend.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: 'https://zaxi-backend.onrender.com',
         ws: true,
+        changeOrigin: true,
+        secure: false,
       },
     },
   },
