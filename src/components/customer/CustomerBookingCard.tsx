@@ -45,9 +45,7 @@ interface CustomerBookingCardProps {
   onBooked: () => void;
 }
 
-const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
-
-/** Fetch place details (lat/lng) */
+/** Fetch place details (lat/lng) — uses local dict or Nominatim */
 async function fetchPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
   if (placeId.startsWith('local_')) {
     const key = placeId.replace('local_', '');
@@ -55,30 +53,14 @@ async function fetchPlaceDetails(placeId: string): Promise<PlaceDetails | null> 
     if (place) return place;
   }
 
-  if (GOOGLE_MAPS_KEY && GOOGLE_MAPS_KEY !== 'mock-key') {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address&key=${GOOGLE_MAPS_KEY}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.status === 'OK') {
-        return {
-          lat: json.result.geometry.location.lat,
-          lng: json.result.geometry.location.lng,
-          address: json.result.formatted_address,
-        };
-      }
-    } catch (err) {
-      console.warn('[fetchPlaceDetails] Google Places error:', err);
-    }
-  }
-
   return null;
 }
 
-/** Autocomplete predictions via Local Places + Nominatim (Free) + Google Places fallback */
+
+/** Autocomplete predictions via Local Places + Nominatim (Free) */
 async function fetchAutocompletePredictions(
   input: string,
-  sessionToken: string,
+  _sessionToken: string,
 ): Promise<PlacePrediction[]> {
   const query = input.trim().toLowerCase();
   if (!query || query.length < 2) return [];
@@ -107,21 +89,7 @@ async function fetchAutocompletePredictions(
     return localMatches;
   }
 
-  // 2. Google Places API fallback
-  if (GOOGLE_MAPS_KEY && GOOGLE_MAPS_KEY !== 'mock-key') {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_KEY}&sessiontoken=${sessionToken}&language=fr&components=country:dz`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.predictions && json.predictions.length > 0) {
-        return json.predictions;
-      }
-    } catch {
-      // fallback to OSM Nominatim
-    }
-  }
-
-  // 3. OpenStreetMap Nominatim Free Search for Algeria
+  // 2. OpenStreetMap Nominatim fallback
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&countrycodes=dz&limit=6&accept-language=fr`,

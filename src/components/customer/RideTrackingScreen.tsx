@@ -1,7 +1,8 @@
-/// <reference types="google.maps" />
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { BookingService } from '@/services/booking.service';
 import { useSocket } from '@/hooks/useSocket';
 import { joinBookingRoom, leaveBookingRoom } from '@/lib/socket';
@@ -11,6 +12,35 @@ import { Phone, X, Clock, MapPin, Navigation, ChevronRight, Car, Home } from 'lu
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 
+// Fix Leaflet default icons in Vite
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
+
+const driverIcon = L.divIcon({
+  className: '',
+  html: `<div style="background:#FF9900;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(255,153,0,0.5);border:3px solid #fff;font-size:18px;">🚗</div>`,
+  iconSize: [40, 40], iconAnchor: [20, 20],
+});
+const pickupIcon = L.divIcon({
+  className: '',
+  html: `<div style="background:#22C55E;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(34,197,94,0.4);border:3px solid #fff;font-size:16px;">📍</div>`,
+  iconSize: [36, 36], iconAnchor: [18, 18],
+});
+const destIcon = L.divIcon({
+  className: '',
+  html: `<div style="background:#111;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,0.4);border:3px solid #fff;font-size:16px;">🏁</div>`,
+  iconSize: [36, 36], iconAnchor: [18, 18],
+});
+
+function RecenterMap({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => { map.setView(center, map.getZoom()); }, [center[0], center[1]]);
+  return null;
+}
+
 interface RideTrackingScreenProps {
   booking: Booking;
   driverName: string;
@@ -19,8 +49,6 @@ interface RideTrackingScreenProps {
   driverPhone: string;
   onBackToHome?: () => void;
 }
-
-const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#F59E0B',
@@ -52,7 +80,7 @@ export function RideTrackingScreen({
 
   const [driverPos, setDriverPos] = useState<{ lat: number; lng: number } | null>(null);
   const [eta, setEta] = useState<string | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
 
   const pickupLat = booking.pickupLat ?? booking.pickupLatitude ?? 36.073;
   const pickupLng = booking.pickupLng ?? booking.pickupLongitude ?? 4.761;
@@ -162,50 +190,30 @@ export function RideTrackingScreen({
     >
       {/* ── Map Area ── */}
       <div style={{ flex: 1, position: 'relative' }}>
-        <APIProvider apiKey={GOOGLE_MAPS_KEY}>
-          <Map
-            mapId="zaxi-customer-tracking"
-            center={mapCenter}
-            zoom={15}
-            gestureHandling="greedy"
-            disableDefaultUI
-            style={{ width: '100%', height: '100%' }}
-            onCameraChanged={(ev) => {
-              if (!mapRef.current) mapRef.current = ev.map;
-            }}
-          >
-            {/* Driver marker */}
-            {driverPos && (
-              <AdvancedMarker position={driverPos} title={driverName}>
-                <div
-                  style={{
-                    background: '#FF9900',
-                    borderRadius: '50%',
-                    width: 40,
-                    height: 40,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(255,153,0,0.5)',
-                    border: '3px solid #fff',
-                  }}
-                >
-                  <Car style={{ color: '#fff', width: 18, height: 18 }} />
-                </div>
-              </AdvancedMarker>
-            )}
+        <MapContainer
+          center={mapCenter as unknown as [number, number]}
+          zoom={15}
+          style={{ width: '100%', height: '100%' }}
+          zoomControl={false}
+          ref={(m) => { if (m) mapRef.current = m; }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+          <RecenterMap center={mapCenter as unknown as [number, number]} />
 
-            {/* Pickup marker */}
-            <AdvancedMarker position={pickupPos} title={t.home.pickup}>
-              <Pin background="#22C55E" borderColor="#fff" glyphColor="#fff" />
-            </AdvancedMarker>
+          {/* Driver marker */}
+          {driverPos && (
+            <Marker position={[driverPos.lat, driverPos.lng]} icon={driverIcon} title={driverName} />
+          )}
 
-            {/* Destination marker */}
-            <AdvancedMarker position={destPos} title={t.home.destination}>
-              <Pin background="#111" borderColor="#fff" glyphColor="#fff" />
-            </AdvancedMarker>
-          </Map>
-        </APIProvider>
+          {/* Pickup marker */}
+          <Marker position={[pickupPos.lat, pickupPos.lng]} icon={pickupIcon} title={t.home.pickup} />
+
+          {/* Destination marker */}
+          <Marker position={[destPos.lat, destPos.lng]} icon={destIcon} title={t.home.destination} />
+        </MapContainer>
 
         {/* Back to Home Button */}
         {onBackToHome && (
