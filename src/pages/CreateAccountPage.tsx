@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
-import { Eye, EyeOff, Phone } from 'lucide-react';
+import { Eye, EyeOff, Phone, User } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
 import { useTranslation } from '@/store/languageStore';
 
@@ -145,12 +145,12 @@ export default function CreateAccountPage() {
           {/* Name input */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <User style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
                 placeholder={language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
                 disabled={registerMutation.isPending}
                 {...register('name')}
-                className="placeholder:text-[#999] placeholder:text-gray-400"
                 style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500, textAlign: language === 'ar' ? 'right' : 'left' }}
               />
             </div>
@@ -168,7 +168,7 @@ export default function CreateAccountPage() {
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder=""
+                placeholder={language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
                 disabled={registerMutation.isPending}
                 {...register('phone', {
                   onChange: (e) => { e.target.value = e.target.value.replace(/\s+/g, ''); },
@@ -206,7 +206,7 @@ export default function CreateAccountPage() {
             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder=""
+                placeholder={language === 'ar' ? 'كلمة المرور' : 'Password'}
                 disabled={registerMutation.isPending}
                 {...register('password')}
                 style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}

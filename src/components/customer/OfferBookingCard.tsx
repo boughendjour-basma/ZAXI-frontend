@@ -8,6 +8,7 @@ import { useTranslation } from '@/store/languageStore';
 import {
   Loader2,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -282,8 +283,8 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             {language === 'ar' ? 'تم تسجيل طلب حجز العرض بنجاح !' : 'Demande d\'offre envoyée avec succès !'}
           </h3>
           <span style={{
-            fontSize: '11px', fontWeight: 800, color: '#D97706',
-            background: '#FEF3C7', padding: '4px 12px', borderRadius: '12px',
+            fontSize: '11px', fontWeight: 800, color: '#FF9900',
+            background: 'rgba(255, 153, 0, 0.12)', padding: '4px 12px', borderRadius: '12px',
           }}>
             {language === 'ar' ? '⏳ في انتظار تحويل العربون عبر CCP' : '⏳ En attente de votre versement CCP'}
           </span>
@@ -291,14 +292,14 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
 
         {/* ⚠️ CRITICAL NOTICE FOR CCP PAYMENT */}
         <div style={{
-          background: 'linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%)',
-          border: '2px solid #F59E0B',
+          background: 'linear-gradient(135deg, #FFF7ED 0%, #FFF8EC 100%)',
+          border: '2px solid #FF9900',
           borderRadius: '20px',
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
-          boxShadow: '0 4px 16px rgba(245, 158, 11, 0.15)',
+          boxShadow: '0 4px 16px rgba(255, 153, 0, 0.15)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontWeight: 900, fontSize: '13px', color: '#92400E' }}>
@@ -341,7 +342,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
           </div>
 
           {/* Trip Summary Mini-Box */}
-          <div style={{ background: '#FFF', borderRadius: '12px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', border: '1px solid #FED7AA' }}>
+          <div style={{ background: '#FFF', borderRadius: '12px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', border: '1px solid #FFE0A0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#64748B' }}>{language === 'ar' ? 'العرض :' : 'Offre :'}</span>
               <span style={{ fontWeight: 700, color: '#0F172A' }}>{offer.title}</span>
@@ -352,7 +353,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             </div>
             <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: '4px', marginTop: '2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 800, color: '#0F172A' }}>{language === 'ar' ? 'السعر (شامل) :' : 'Prix (tout inclus) :'}</span>
-              <span style={{ fontWeight: 900, fontSize: '14px', color: '#D97706' }}>{basePrice > 0 ? `${basePrice} DA` : '—'}</span>
+              <span style={{ fontWeight: 900, fontSize: '14px', color: '#FF9900' }}>{basePrice > 0 ? `${basePrice} DA` : '—'}</span>
             </div>
           </div>
         </div>
@@ -366,9 +367,10 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
             background: '#25D366', color: '#fff', borderRadius: '18px',
             padding: '14px 20px', fontWeight: 900, fontSize: '13px',
-            textDecoration: 'none',
+            textDecoration: 'none', boxShadow: '0 4px 14px rgba(37, 211, 102, 0.3)',
           }}
         >
+          <MessageCircle style={{ width: 18, height: 18, flexShrink: 0, color: '#fff' }} />
           <span>{language === 'ar' ? `مراسلة السائق على واتساب لتحويل CCP (${driverPhone})` : `Contacter sur WhatsApp pour versement CCP (${driverPhone})`}</span>
         </a>
 
@@ -419,8 +421,8 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
           🚨 PAYMENT ALERT — WhatsApp versement required
           ════════════════════════════════════════════════════ */}
       <div style={{
-        background: 'linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%)',
-        border: '2px solid #F59E0B',
+        background: 'linear-gradient(135deg, #FFF7ED 0%, #FFF8EC 100%)',
+        border: '2px solid #FF9900',
         borderRadius: '18px',
         padding: '14px 16px',
         display: 'flex',
@@ -460,7 +462,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             },
           ].map(({ step, fr, ar }) => (
             <div key={step} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <span style={{ background: '#F59E0B', color: '#fff', fontWeight: 900, fontSize: '10px', borderRadius: '50%', minWidth: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+              <span style={{ background: '#FF9900', color: '#fff', fontWeight: 900, fontSize: '10px', borderRadius: '50%', minWidth: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                 {step}
               </span>
               <p style={{ fontSize: '11px', color: '#78350F', margin: 0, fontWeight: 600, lineHeight: 1.4 }}>
@@ -472,8 +474,9 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
 
         {/* WhatsApp CTA */}
         <a href={waLink} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#25D366', color: '#fff', borderRadius: '14px', padding: '11px 16px', fontWeight: 800, fontSize: '12px', textDecoration: 'none' }}>
-          {language === 'ar' ? `تواصل مع السائق عبر واتساب — ${driverPhone}` : `Contacter le chauffeur sur WhatsApp — ${driverPhone}`}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', color: '#fff', borderRadius: '14px', padding: '11px 16px', fontWeight: 800, fontSize: '12px', textDecoration: 'none', boxShadow: '0 3px 10px rgba(37, 211, 102, 0.25)' }}>
+          <MessageCircle style={{ width: 16, height: 16, flexShrink: 0, color: '#fff' }} />
+          <span>{language === 'ar' ? `تواصل مع السائق عبر واتساب — ${driverPhone}` : `Contacter le chauffeur sur WhatsApp — ${driverPhone}`}</span>
         </a>
       </div>
 
@@ -499,7 +502,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
               GPS
             </button>
             <button type="button" onClick={() => setPickupMode('manual')}
-              style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'manual' ? '1.5px solid #FF9900' : '1.5px solid #E2E8F0', background: pickupMode === 'manual' ? '#FFF8EC' : '#F8FAFC', color: pickupMode === 'manual' ? '#D97706' : '#64748B', transition: 'all 0.2s' }}>
+              style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'manual' ? '1.5px solid #FF9900' : '1.5px solid #E2E8F0', background: pickupMode === 'manual' ? '#FFF8EC' : '#F8FAFC', color: pickupMode === 'manual' ? '#FF9900' : '#64748B', transition: 'all 0.2s' }}>
               {language === 'ar' ? 'يدوي' : 'Manuel'}
             </button>
           </div>
@@ -510,7 +513,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             {gpsStatus === 'detecting' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFF8EC', border: '1.5px solid #FFE0A0', borderRadius: '16px', padding: '14px 16px' }}>
                 <Loader2 style={{ color: '#FF9900', width: 16, height: 16 }} className="animate-spin" />
-                <span style={{ fontSize: '13px', color: '#AA6600', fontWeight: 600 }}>{language === 'ar' ? 'جاري تحديد موقعك...' : 'Localisation en cours...'}</span>
+                <span style={{ fontSize: '13px', color: '#FF9900', fontWeight: 600 }}>{language === 'ar' ? 'جاري تحديد موقعك...' : 'Localisation en cours...'}</span>
               </div>
             )}
             {gpsStatus === 'success' && gpsLocation && (

@@ -21,7 +21,7 @@ export function LanguageSelector({ className }: LanguageSelectorProps) {
       )}
     >
       <div className="flex items-center gap-2.5">
-        <div className="p-1.5 rounded-xl bg-[#FF9900]/20 text-[#D97706] group-hover:scale-105 transition-transform">
+        <div className="p-1.5 rounded-xl bg-[#FF9900]/20 text-[#FF9900] group-hover:scale-105 transition-transform">
           <Globe className="h-4 w-4" />
         </div>
         <span className="text-xs font-bold text-slate-900">

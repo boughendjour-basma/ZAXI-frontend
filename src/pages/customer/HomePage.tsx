@@ -7,7 +7,7 @@ import { OfferBookingCard } from '@/components/customer/OfferBookingCard';
 import { RideTrackingScreen } from '@/components/customer/RideTrackingScreen';
 import { useTranslation } from '@/store/languageStore';
 import { useSocket } from '@/hooks/useSocket';
-import { X, Phone, MessageCircle } from 'lucide-react';
+import { X, Phone, MessageCircle, Home, ArrowRight, Tag, Clock, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 
@@ -206,13 +206,13 @@ export default function CustomerHomePage() {
         <button
           type="button"
           onClick={() => setActiveTab('main')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center cursor-pointer ${
+          className={`px-3 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'main'
-              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
-              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+              ? 'bg-[#FF9900] text-slate-950 font-bold border-[#FF9900] shadow-md shadow-[#FF9900]/25'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-[#FF9900]/50 hover:bg-[#FF9900]/10'
           }`}
         >
-          <span>{t.home.tabHome}</span>
+          <Home style={{ width: 16, height: 16 }} />
         </button>
 
         {/* Button: Reservations finis */}
@@ -221,10 +221,11 @@ export default function CustomerHomePage() {
           onClick={() => setActiveTab(activeTab === 'finished' ? 'main' : 'finished')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'finished'
-              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
-              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+              ? 'bg-[#FF9900] text-slate-950 font-bold border-[#FF9900] shadow-md shadow-[#FF9900]/25'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-[#FF9900]/50 hover:bg-[#FF9900]/10'
           }`}
         >
+          <Clock style={{ width: 13, height: 13, flexShrink: 0 }} />
           <span>{t.home.tabFinished}</span>
           {completedBookings.length > 0 && (
             <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
@@ -239,10 +240,11 @@ export default function CustomerHomePage() {
           onClick={() => setActiveTab(activeTab === 'scheduled' ? 'main' : 'scheduled')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'scheduled'
-              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
-              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+              ? 'bg-[#FF9900] text-slate-950 font-bold border-[#FF9900] shadow-md shadow-[#FF9900]/25'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-[#FF9900]/50 hover:bg-[#FF9900]/10'
           }`}
         >
+          <Calendar style={{ width: 13, height: 13, flexShrink: 0 }} />
           <span>{t.home.tabScheduled}</span>
           {scheduledBookings.length > 0 && (
             <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
@@ -257,10 +259,11 @@ export default function CustomerHomePage() {
           onClick={() => setActiveTab(activeTab === 'offers' ? 'main' : 'offers')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'offers'
-              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
-              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
+              ? 'bg-[#FF9900] text-slate-950 font-bold border-[#FF9900] shadow-md shadow-[#FF9900]/25'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-[#FF9900]/50 hover:bg-[#FF9900]/10'
           }`}
         >
+          <Tag style={{ width: 13, height: 13, flexShrink: 0 }} />
           <span>{t.home.ourOffers}</span>
           {announcements.length > 0 && (
             <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
@@ -320,7 +323,7 @@ export default function CustomerHomePage() {
             scheduledBookings.map((b) => (
               <div
                 key={b.id}
-                className="bg-white rounded-3xl border border-amber-200/70 p-5 shadow-lg shadow-amber-500/5 space-y-4 text-start"
+                className="bg-white rounded-3xl border border-[#FF9900]/30 p-5 shadow-lg shadow-[#FF9900]/5 space-y-4 text-start"
               >
                 {/* Header with status badge */}
                 <div className="flex items-center justify-between">
@@ -328,8 +331,8 @@ export default function CustomerHomePage() {
                     {b.status === 'PENDING' ? (
                       <>
                         <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF9900] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#FF9900]" />
                         </span>
                         <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                           {t.home.pendingConfirmation}
@@ -348,7 +351,7 @@ export default function CustomerHomePage() {
                   </div>
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                     b.status === 'PENDING'
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      ? 'bg-[#FF9900]/10 text-slate-950 border border-[#FF9900]/30'
                       : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   }`}>
                     {b.status === 'PENDING' ? t.home.pending : (language === 'ar' ? 'مؤكدة' : 'Confirmée')}
@@ -356,7 +359,7 @@ export default function CustomerHomePage() {
                 </div>
 
                 {/* Details box */}
-                <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2 text-xs text-slate-700 text-start">
+                <div className="p-3.5 rounded-2xl bg-[#FF9900]/5 border border-[#FF9900]/20 space-y-2 text-xs text-slate-700 text-start">
                   <div>
                     <span><strong>{t.home.pickup}:</strong> {b.pickupAddress || t.home.currentPosition}</span>
                   </div>
@@ -364,23 +367,23 @@ export default function CustomerHomePage() {
                     <span><strong>{t.home.destination}:</strong> {b.destinationAddress || b.dropoffAddress || t.home.notSpecified}</span>
                   </div>
                   {b.scheduledAt && (
-                    <div className="pt-1 border-t border-amber-200/40 text-amber-900 font-medium">
+                    <div className="pt-1 border-t border-[#FF9900]/20 text-slate-800 font-medium">
                       <span><strong>{t.home.plannedOn}:</strong> {new Date(b.scheduledAt).toLocaleString(language === 'ar' ? 'ar-DZ' : 'fr-FR')}</span>
                     </div>
                   )}
-                  <div className="pt-2 border-t border-amber-200/50 flex justify-between items-center font-bold text-slate-900">
+                  <div className="pt-2 border-t border-[#FF9900]/20 flex justify-between items-center font-bold text-slate-900">
                     <span>{t.home.estimatedFare}</span>
-                    <span className="text-amber-600 text-sm font-extrabold">{b.estimatedPrice || 150} {t.home.currency}</span>
+                    <span className="text-[#FF9900] text-sm font-extrabold">{b.estimatedPrice || 150} {t.home.currency}</span>
                   </div>
                 </div>
 
                 {/* Pending CCP Notice & WhatsApp Contact Button */}
                 {b.status === 'PENDING' && (
-                  <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 p-3.5 space-y-2.5 text-xs text-start">
-                    <div className="font-black text-amber-950">
+                  <div className="rounded-2xl bg-[#FF9900]/10 border-2 border-[#FF9900]/40 p-3.5 space-y-2.5 text-xs text-start">
+                    <div className="font-black text-slate-950">
                       <span>{language === 'ar' ? 'تحويل العربون عبر CCP مطلوب لتأكيد الرحلة' : 'Versement CCP requis pour confirmer'}</span>
                     </div>
-                    <p className="text-[11px] text-amber-900 leading-relaxed font-semibold">
+                    <p className="text-[11px] text-slate-800 leading-relaxed font-semibold">
                       {language === 'ar'
                         ? `طلبك مسجل بنجاح. يرجى العلم بأن السائق لن يؤكد الرحلة ولن يقبلها إلا بعد أن تتواصل معه عبر واتساب وتحول العربون إلى حسابه البريدي الجاري CCP (${driver.phoneNumber || '0555123456'}).`
                         : `Votre demande est enregistrée. Le chauffeur ne confirmera PAS cette course tant que vous ne l'avez pas contacté sur WhatsApp pour lui verser l'acompte sur son compte CCP (${driver.phoneNumber || '0555123456'}).`}
@@ -393,8 +396,9 @@ export default function CustomerHomePage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center py-2.5 px-3 rounded-xl bg-[#25D366] text-white text-xs font-black hover:brightness-105 transition-all"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] text-white text-xs font-black hover:brightness-105 transition-all shadow-sm"
                     >
+                      <MessageCircle className="w-4 h-4 text-white shrink-0" />
                       <span>{language === 'ar' ? 'مراسلة السائق على واتساب لتحويل CCP' : 'Contacter sur WhatsApp (Versement CCP)'}</span>
                     </a>
                   </div>
@@ -455,10 +459,10 @@ export default function CustomerHomePage() {
                 {(driver.phoneNumber || driver.phone) && (
                   <a
                     href={`tel:${driver.phoneNumber || driver.phone}`}
-                    className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:text-amber-600 shadow-xs flex items-center justify-center transition-all"
+                    className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:text-[#FF9900] shadow-xs flex items-center justify-center transition-all"
                     title={language === 'ar' ? 'اتصال مباشر بالسائق' : 'Appeler le chauffeur'}
                   >
-                    <Phone className="w-4 h-4 text-amber-600" />
+                    <Phone className="w-4 h-4 text-[#FF9900]" />
                   </a>
                 )}
                 {(driver.whatsappNumber || driver.phoneNumber || driver.phone) && (
@@ -466,7 +470,7 @@ export default function CustomerHomePage() {
                     href={`https://wa.me/${(driver.whatsappNumber || driver.phoneNumber || driver.phone || '').replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm flex items-center justify-center transition-all"
+                    className="p-2.5 rounded-2xl bg-[#25D366] text-white hover:brightness-105 shadow-sm flex items-center justify-center transition-all"
                     title="WhatsApp"
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -482,7 +486,7 @@ export default function CustomerHomePage() {
                 {driver.vehicleColor ? ` • ${driver.vehicleColor}` : ''}
               </span>
               {driver.vehiclePlate && (
-                <span className="inline-flex items-center font-mono text-[11px] font-black bg-amber-100 text-amber-950 border border-amber-300/80 px-2.5 py-1 rounded-xl shadow-xs">
+                <span className="inline-flex items-center font-mono text-[11px] font-black bg-[#FF9900]/15 text-slate-950 border border-[#FF9900]/30 px-2.5 py-1 rounded-xl shadow-xs">
                   {driver.vehiclePlate}
                 </span>
               )}
@@ -490,7 +494,7 @@ export default function CustomerHomePage() {
           </div>
 
           {/* ── 3. Main Info Card (Orange Border Frame) ── */}
-          <div className="bg-white rounded-3xl border-2 border-amber-500 shadow-xl shadow-amber-500/5 text-start overflow-hidden">
+          <div className="bg-white rounded-3xl border-2 border-[#FF9900] shadow-xl shadow-[#FF9900]/10 text-start overflow-hidden">
             
             {/* Content Section */}
             <div className="p-5 sm:p-6 space-y-4 text-slate-800 text-sm leading-relaxed">
@@ -506,14 +510,14 @@ export default function CustomerHomePage() {
               <ul className="space-y-2.5 text-xs text-slate-700 font-medium px-1">
                 {serviceList.map((service, idx) => (
                   <li key={idx} className="flex items-center gap-2">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FF9900] shrink-0" />
                     <span>{service}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-xs text-slate-700 italic space-y-1">
-                <p className="font-semibold text-amber-900 not-italic">
+              <div className="p-3.5 rounded-2xl bg-[#FF9900]/5 border border-[#FF9900]/20 text-xs text-slate-700 italic space-y-1">
+                <p className="font-semibold text-slate-950 not-italic">
                   {t.home.vipTitle}
                 </p>
                 <p>
@@ -560,9 +564,10 @@ export default function CustomerHomePage() {
             <button
               type="button"
               onClick={() => setIsBookingModalOpen(true)}
-              className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center cursor-pointer"
+              className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>{t.home.bookNow}</span>
+              <ArrowRight style={{ width: 18, height: 18, flexShrink: 0 }} />
             </button>
           </div>
         </>
@@ -577,6 +582,7 @@ export default function CustomerHomePage() {
             onClick={() => setActiveTab(activeTab === 'offers' ? 'main' : 'offers')}
             className="z-10 -mb-4 bg-white border-2 border-[#FF9900] text-slate-900 font-extrabold text-sm px-8 py-2.5 rounded-full shadow-md hover:bg-amber-50 transition-all flex items-center gap-2 cursor-pointer"
           >
+            <Tag style={{ width: 15, height: 15, flexShrink: 0 }} />
             <span>{t.home.ourOffers}</span>
             {announcements.length > 0 && (
               <span className="bg-[#FF9900] text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">
@@ -598,7 +604,7 @@ export default function CustomerHomePage() {
                       {ann.title}
                     </h4>
                     {ann.price != null && (
-                      <span className="font-black text-amber-600 text-sm whitespace-nowrap bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                      <span className="font-black text-[#FF9900] text-sm whitespace-nowrap bg-[#FF9900]/10 px-2.5 py-1 rounded-xl border border-[#FF9900]/30">
                         {ann.price.toLocaleString(language === 'ar' ? 'ar-DZ' : 'fr-DZ')} {t.home.currency}
                       </span>
                     )}

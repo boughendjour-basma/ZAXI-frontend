@@ -135,7 +135,7 @@ export default function LoginPage() {
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder=""
+                placeholder={language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
                 disabled={loginMutation.isPending}
                 {...register('phone', {
                   onChange: (e) => {
@@ -175,7 +175,7 @@ export default function LoginPage() {
             >
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder=""
+                placeholder={language === 'ar' ? 'كلمة المرور' : 'Password'}
                 disabled={loginMutation.isPending}
                 {...register('password')}
                 style={{

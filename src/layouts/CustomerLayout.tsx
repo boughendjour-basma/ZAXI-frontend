@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, Home, Clock, Bell, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
@@ -17,6 +18,7 @@ interface NavItem {
   label: string;
   end?: boolean;
   badge?: number;
+  icon?: React.ElementType;
 }
 
 export function CustomerLayout() {
@@ -37,14 +39,15 @@ export function CustomerLayout() {
   const driverIsOnline: boolean = rawDriver?.isOnline === true;
 
   const navItems: NavItem[] = [
-    { to: '/', label: t.nav.home, end: true },
-    { to: '/history', label: t.nav.rides },
+    { to: '/', label: t.nav.home, end: true, icon: Home },
+    { to: '/history', label: t.nav.rides, icon: Clock },
     {
       to: '/notifications',
       label: t.nav.notifications,
       badge: unreadCount > 0 ? unreadCount : undefined,
+      icon: Bell,
     },
-    { to: '/profile', label: t.nav.profile },
+    { to: '/profile', label: t.nav.profile, icon: User },
   ];
 
   function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -76,7 +79,7 @@ export function CustomerLayout() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5" aria-label="Customer navigation">
-          {navItems.map(({ to, label, end, badge }) => (
+          {navItems.map(({ to, label, end, badge, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -91,8 +94,9 @@ export function CustomerLayout() {
                 )
               }
             >
-              {() => (
+              {({ isActive }) => (
                 <>
+                  {Icon && <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-black' : 'text-[#333]')} />}
                   <span className="flex-1">{label}</span>
                   {badge !== undefined && (
                     <span className="h-5 min-w-[20px] px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">

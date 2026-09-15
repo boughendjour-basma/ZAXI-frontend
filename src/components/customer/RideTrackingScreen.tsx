@@ -50,7 +50,7 @@ interface RideTrackingScreenProps {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: '#F59E0B',
+  PENDING: '#FF9900',
   ACCEPTED: '#3B82F6',
   IN_PROGRESS: '#22C55E',
   COMPLETED: '#6B7280',
@@ -395,7 +395,7 @@ export function RideTrackingScreen({
           </div>
           {eta && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF8EC', borderRadius: '12px', padding: '8px 14px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#AA6600' }}>{eta}</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#FF9900' }}>{eta}</span>
             </div>
           )}
         </div>

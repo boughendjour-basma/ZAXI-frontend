@@ -10,6 +10,7 @@ import type { BookingEstimate } from '@/types/booking.types';
 import {
   Loader2,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -874,8 +875,8 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
             {language === 'ar' ? 'تم تسجيل طلب حجزك بنجاح !' : 'Demande de réservation envoyée !'}
           </h3>
           <span style={{
-            fontSize: '11px', fontWeight: 800, color: '#D97706',
-            background: '#FEF3C7', padding: '4px 12px', borderRadius: '12px',
+            fontSize: '11px', fontWeight: 800, color: '#FF9900',
+            background: 'rgba(255, 153, 0, 0.12)', padding: '4px 12px', borderRadius: '12px',
           }}>
             {language === 'ar' ? '⏳ في انتظار تحويل العربون عبر CCP' : '⏳ En attente de votre versement CCP'}
           </span>
@@ -883,14 +884,14 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
 
         {/* ⚠️ CRITICAL NOTICE FOR CCP PAYMENT */}
         <div style={{
-          background: 'linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%)',
-          border: '2px solid #F59E0B',
+          background: 'linear-gradient(135deg, #FFF7ED 0%, #FFF8EC 100%)',
+          border: '2px solid #FF9900',
           borderRadius: '20px',
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
-          boxShadow: '0 4px 16px rgba(245, 158, 11, 0.15)',
+          boxShadow: '0 4px 16px rgba(255, 153, 0, 0.15)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontWeight: 900, fontSize: '13px', color: '#92400E' }}>
@@ -933,7 +934,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
           </div>
 
           {/* Trip Summary Mini-Box */}
-          <div style={{ background: '#FFF', borderRadius: '12px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', border: '1px solid #FED7AA' }}>
+          <div style={{ background: '#FFF', borderRadius: '12px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', border: '1px solid #FFE0A0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#64748B' }}>{language === 'ar' ? 'الموعد :' : 'Date :'}</span>
               <span style={{ fontWeight: 700, color: '#0F172A' }}>{scheduledDateFormatted}</span>
@@ -950,7 +951,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
             )}
             <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: '4px', marginTop: '2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 800, color: '#0F172A' }}>{language === 'ar' ? 'الإجمالي المقدر :' : 'Total estimé :'}</span>
-              <span style={{ fontWeight: 900, fontSize: '14px', color: '#D97706' }}>{totalPrice} DA</span>
+              <span style={{ fontWeight: 900, fontSize: '14px', color: '#FF9900' }}>{totalPrice} DA</span>
             </div>
           </div>
         </div>
@@ -964,9 +965,10 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
             background: '#25D366', color: '#fff', borderRadius: '18px',
             padding: '14px 20px', fontWeight: 900, fontSize: '13px',
-            textDecoration: 'none',
+            textDecoration: 'none', boxShadow: '0 4px 14px rgba(37, 211, 102, 0.3)',
           }}
         >
+          <MessageCircle style={{ width: 18, height: 18, flexShrink: 0, color: '#fff' }} />
           <span>{language === 'ar' ? `مراسلة السائق على واتساب لتحويل CCP (${driverPhone})` : `Contacter sur WhatsApp pour versement CCP (${driverPhone})`}</span>
         </a>
 
@@ -1013,7 +1015,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
                 padding: '12px 10px', borderRadius: '16px',
                 border: bookingMode === mode ? '2px solid #FF9900' : '1.5px solid #E2E8F0',
                 backgroundColor: bookingMode === mode ? '#FFF8EC' : '#F8FAFC',
-                color: bookingMode === mode ? '#D97706' : '#64748B',
+                color: bookingMode === mode ? '#FF9900' : '#64748B',
                 fontWeight: 700, fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s',
               }}
             >
@@ -1063,7 +1065,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
                   cursor: 'pointer', transition: 'all 0.2s', gap: '3px', textAlign: 'center',
                 }}
               >
-                <span style={{ fontSize: '11px', fontWeight: 800, color: scheduledDuration === 'none' ? '#D97706' : '#1E293B' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: scheduledDuration === 'none' ? '#FF9900' : '#1E293B' }}>
                   {language === 'ar' ? 'بدون انتظار' : 'Aller simple'}
                 </span>
                 <span style={{ fontSize: '10px', color: '#64748B' }}>
@@ -1086,13 +1088,13 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
                   cursor: 'pointer', transition: 'all 0.2s', gap: '3px', textAlign: 'center',
                 }}
               >
-                <span style={{ fontSize: '11px', fontWeight: 800, color: scheduledDuration === 'half' ? '#D97706' : '#1E293B' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: scheduledDuration === 'half' ? '#FF9900' : '#1E293B' }}>
                   {language === 'ar' ? 'نصف يوم' : 'Demi-journée'}
                 </span>
                 <span style={{ fontSize: '10px', color: '#64748B' }}>
                   {language === 'ar' ? '< 6 ساعات' : '< 6 heures'}
                 </span>
-                <span style={{ fontSize: '10px', fontWeight: 800, color: '#D97706', background: '#FEF3C7', padding: '2px 6px', borderRadius: '6px', marginTop: '2px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9900', background: 'rgba(255, 153, 0, 0.12)', padding: '2px 6px', borderRadius: '6px', marginTop: '2px' }}>
                   +1 000 DA
                 </span>
               </button>
@@ -1109,13 +1111,13 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
                   cursor: 'pointer', transition: 'all 0.2s', gap: '3px', textAlign: 'center',
                 }}
               >
-                <span style={{ fontSize: '11px', fontWeight: 800, color: scheduledDuration === 'full' ? '#D97706' : '#1E293B' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: scheduledDuration === 'full' ? '#FF9900' : '#1E293B' }}>
                   {language === 'ar' ? 'يوم كامل' : 'Journée entière'}
                 </span>
                 <span style={{ fontSize: '10px', color: '#64748B' }}>
                   {language === 'ar' ? '≥ 6 ساعات' : '≥ 6 heures'}
                 </span>
-                <span style={{ fontSize: '10px', fontWeight: 800, color: '#D97706', background: '#FEF3C7', padding: '2px 6px', borderRadius: '6px', marginTop: '2px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9900', background: 'rgba(255, 153, 0, 0.12)', padding: '2px 6px', borderRadius: '6px', marginTop: '2px' }}>
                   +2 000 DA
                 </span>
               </button>
@@ -1151,8 +1153,8 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
               <span style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                color: withRetour ? '#D97706' : '#64748B',
-                background: withRetour ? '#FEF3C7' : '#E2E8F0',
+                color: withRetour ? '#FF9900' : '#64748B',
+                background: withRetour ? 'rgba(255, 153, 0, 0.12)' : '#E2E8F0',
                 padding: '3px 8px',
                 borderRadius: '8px',
               }}>
@@ -1169,14 +1171,14 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
 
           {/* 🚨 PAYMENT VERSEMENT ALERT (WhatsApp confirmation) */}
           <div style={{
-            background: 'linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%)',
-            border: '2px solid #F59E0B',
+            background: 'linear-gradient(135deg, #FFF7ED 0%, #FFF8EC 100%)',
+            border: '2px solid #FF9900',
             borderRadius: '18px',
             padding: '14px 16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',
-            boxShadow: '0 2px 10px rgba(245, 158, 11, 0.12)',
+            boxShadow: '0 2px 10px rgba(255, 153, 0, 0.12)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span style={{ fontWeight: 900, fontSize: '13px', color: '#92400E' }}>
@@ -1209,7 +1211,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
                 },
               ].map(({ step, fr, ar }) => (
                 <div key={step} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ background: '#F59E0B', color: '#fff', fontWeight: 900, fontSize: '10px', borderRadius: '50%', minWidth: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <span style={{ background: '#FF9900', color: '#fff', fontWeight: 900, fontSize: '10px', borderRadius: '50%', minWidth: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                     {step}
                   </span>
                   <p style={{ fontSize: '11px', color: '#78350F', margin: 0, fontWeight: 600, lineHeight: 1.4 }}>
@@ -1224,13 +1226,14 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 background: '#25D366', color: '#fff', borderRadius: '14px',
                 padding: '11px 16px', fontWeight: 800, fontSize: '12px',
-                textDecoration: 'none',
+                textDecoration: 'none', boxShadow: '0 3px 10px rgba(37, 211, 102, 0.25)',
               }}
             >
-              {language === 'ar' ? `تواصل مع السائق عبر واتساب — ${driverPhone}` : `Contacter le chauffeur sur WhatsApp — ${driverPhone}`}
+              <MessageCircle style={{ width: 16, height: 16, flexShrink: 0, color: '#fff' }} />
+              <span>{language === 'ar' ? `تواصل مع السائق عبر واتساب — ${driverPhone}` : `Contacter le chauffeur sur WhatsApp — ${driverPhone}`}</span>
             </a>
           </div>
         </div>
@@ -1249,7 +1252,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
               GPS
             </button>
             <button type="button" onClick={() => setPickupMode('manual')}
-              style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'manual' ? '1.5px solid #FF9900' : '1.5px solid #E2E8F0', background: pickupMode === 'manual' ? '#FFF8EC' : '#F8FAFC', color: pickupMode === 'manual' ? '#D97706' : '#64748B', transition: 'all 0.2s' }}>
+              style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'manual' ? '1.5px solid #FF9900' : '1.5px solid #E2E8F0', background: pickupMode === 'manual' ? '#FFF8EC' : '#F8FAFC', color: pickupMode === 'manual' ? '#FF9900' : '#64748B', transition: 'all 0.2s' }}>
               {language === 'ar' ? 'يدوي' : 'Manuel'}
             </button>
           </div>
@@ -1261,7 +1264,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
             {gpsStatus === 'detecting' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFF8EC', border: '1.5px solid #FFE0A0', borderRadius: '16px', padding: '14px 16px' }}>
                 <Loader2 style={{ color: '#FF9900', width: 16, height: 16 }} className="animate-spin" />
-                <span style={{ fontSize: '13px', color: '#AA6600', fontWeight: 600 }}>{t.booking.detectingGps}</span>
+                <span style={{ fontSize: '13px', color: '#FF9900', fontWeight: 600 }}>{t.booking.detectingGps}</span>
               </div>
             )}
             {gpsStatus === 'success' && gpsLocation && (
@@ -1333,12 +1336,9 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
 
         {/* BBA Dairas Fixed Routes shortcuts */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
             <span style={{ fontSize: '10px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {language === 'ar' ? 'خطوط دوائر برج بوعريريج (تعريفة ثابتة)' : 'Daïras de BBA (Tarifs Fixes)'}
-            </span>
-            <span style={{ fontSize: '9px', fontWeight: 800, color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '2px 6px', borderRadius: '6px' }}>
-              {language === 'ar' ? 'سعر ثابت' : 'Prix Fixe'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
@@ -1405,7 +1405,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
                 const place = ALGERIA_PLACES[w.key] || findMatchingPlace(w.key);
                 if (place) { setDestInput(place.address); setSelectedDest(place); setEstimate(computeEstimate(getPickupCoords(), place, cityFlatFare, outsideRatePerKm)); }
               }}
-              style={{ padding: '4px 10px', background: '#FFF8EC', border: '1px solid #FCD34D', borderRadius: '10px', fontSize: '11px', fontWeight: 700, color: '#B45309', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              style={{ padding: '4px 10px', background: 'rgba(255, 153, 0, 0.08)', border: '1px solid #FF9900', borderRadius: '10px', fontSize: '11px', fontWeight: 700, color: '#FF9900', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               {w.name}
             </button>
           ))}
@@ -1479,7 +1479,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
               <span style={{
                 fontSize: '20px',
                 fontWeight: 900,
-                color: isBbaFixed ? '#0F172A' : estimate?.pricingType === 'DISTANCE' ? '#1D4ED8' : '#D97706',
+                color: isBbaFixed ? '#0F172A' : estimate?.pricingType === 'DISTANCE' ? '#1D4ED8' : '#FF9900',
               }}>
                 {isEstimating ? <Loader2 className="animate-spin w-4 h-4 text-[#888]" /> : `${totalPrice} ${t.common.currency}`}
               </span>
