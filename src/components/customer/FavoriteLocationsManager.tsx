@@ -3,19 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FavoriteService } from '@/services/favorite.service';
 import type { Favorite } from '@/services/favorite.service';
 import { useTranslation } from '@/store/languageStore';
-import { Plus, Trash2, Home, Briefcase, Plane, Star, Loader2, X, MapPin } from 'lucide-react';
+import { Trash2, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-function getFavoriteIcon(name: string) {
-  const lower = name.toLowerCase();
-  if (lower.includes('maison') || lower.includes('home') || lower.includes('منزل') || lower.includes('دار'))
-    return <Home className="w-4 h-4" style={{ color: '#FF9900' }} />;
-  if (lower.includes('travail') || lower.includes('bureau') || lower.includes('work') || lower.includes('عمل') || lower.includes('مكتب'))
-    return <Briefcase className="w-4 h-4" style={{ color: '#3B82F6' }} />;
-  if (lower.includes('aéroport') || lower.includes('aeroport') || lower.includes('airport') || lower.includes('مطار'))
-    return <Plane className="w-4 h-4" style={{ color: '#6366F1' }} />;
-  return <Star className="w-4 h-4" style={{ color: '#FF9900' }} />;
-}
 
 export function FavoriteLocationsManager() {
   const queryClient = useQueryClient();
@@ -88,8 +77,8 @@ export function FavoriteLocationsManager() {
   };
 
   const presets = language === 'ar'
-    ? ['🏠 المنزل', '💼 العمل', '✈️ المطار']
-    : ['🏠 Maison', '💼 Travail', '✈️ Aéroport'];
+    ? ['المنزل', 'العمل', 'المطار']
+    : ['Maison', 'Travail', 'Aéroport'];
 
   return (
     <div className="space-y-4 text-start">
@@ -104,7 +93,7 @@ export function FavoriteLocationsManager() {
           onClick={() => setIsAddModalOpen(true)}
           className="inline-flex items-center gap-1 text-[12px] font-bold cursor-pointer text-[#FF9900]"
         >
-          <Plus className="w-3.5 h-3.5" /> {t.profile.addFavorite}
+          + {t.profile.addFavorite}
         </button>
       </div>
 
@@ -123,7 +112,6 @@ export function FavoriteLocationsManager() {
         <div
           className="py-6 px-4 rounded-2xl text-center space-y-3 bg-slate-50"
         >
-          <MapPin className="w-6 h-6 mx-auto text-slate-300" />
           <p className="text-[12px] font-medium text-slate-500">
             {language === 'ar' ? 'لا توجد أماكن مفضلة محفوظة (مثل: المنزل، العمل).' : 'Aucun lieu favori enregistré (ex: Maison, Travail).'}
           </p>
@@ -140,9 +128,9 @@ export function FavoriteLocationsManager() {
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="p-2.5 rounded-xl shrink-0 bg-white shadow-xs"
+                  className="w-8 h-8 rounded-xl shrink-0 bg-white border border-slate-200 flex items-center justify-center text-[12px] font-extrabold text-slate-700 shadow-xs"
                 >
-                  {getFavoriteIcon(fav.name)}
+                  {fav.name ? fav.name.charAt(0).toUpperCase() : '•'}
                 </div>
                 <div>
                   <div className="text-[13px] font-bold text-slate-900">

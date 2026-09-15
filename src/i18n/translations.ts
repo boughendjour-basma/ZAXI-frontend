@@ -542,8 +542,8 @@ export const translations: Record<Language, Translations> = {
     },
     booking: {
       modalTitle: 'Réserver un chauffeur VTC',
-      instantTab: '⚡ À l’instant',
-      scheduledTab: '📅 À une date précise',
+      instantTab: 'À l’instant',
+      scheduledTab: 'À une date précise',
       pickupLabel: 'Lieu de départ',
       pickupPlaceholder: 'Rechercher votre lieu de départ...',
       detectingGps: 'Détection de votre position GPS...',
@@ -931,8 +931,8 @@ export const translations: Record<Language, Translations> = {
     },
     booking: {
       modalTitle: 'حجز سائق خاص VTC',
-      instantTab: '⚡ الآن فوراً',
-      scheduledTab: '📅 موعد مبرمج',
+      instantTab: 'الآن فوراً',
+      scheduledTab: 'موعد مبرمج',
       pickupLabel: 'نقطة الانطلاق',
       pickupPlaceholder: 'حدد مكان الانطلاق...',
       detectingGps: 'جاري تحديد موقعك عبر GPS...',

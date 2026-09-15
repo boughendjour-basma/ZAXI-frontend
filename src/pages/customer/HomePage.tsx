@@ -7,22 +7,7 @@ import { OfferBookingCard } from '@/components/customer/OfferBookingCard';
 import { RideTrackingScreen } from '@/components/customer/RideTrackingScreen';
 import { useTranslation } from '@/store/languageStore';
 import { useSocket } from '@/hooks/useSocket';
-import {
-  Home as HomeIcon,
-  Calendar,
-  X,
-  ShieldCheck,
-  CheckCircle2,
-  Sparkles,
-  ArrowRight,
-  Clock,
-  MapPin,
-  Tag,
-  Car,
-  Banknote,
-  MessageCircle,
-  Phone,
-} from 'lucide-react';
+import { X, Phone, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 
@@ -203,35 +188,31 @@ export default function CustomerHomePage() {
           className="mb-4 p-4 rounded-2xl bg-[#FF9900] text-slate-950 font-bold text-xs flex items-center justify-between cursor-pointer shadow-md hover:opacity-95 transition-all group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm">
-              <Car className="h-5 w-5 text-slate-900" />
-            </div>
             <div className="text-start">
               <p className="text-slate-900 font-black text-sm">{t.home.activeRideTitle}</p>
               <p className="text-slate-800 text-[11px] font-medium">{t.home.activeRideSubtitle}</p>
             </div>
           </div>
-          <span className="bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold group-hover:scale-105 transition-transform flex items-center gap-1">
-            {t.home.showRide} <ArrowRight className={cn('h-3.5 w-3.5 inline', isRTL && 'rotate-180')} />
+          <span className="bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold group-hover:scale-105 transition-transform">
+            {t.home.showRide}
           </span>
         </div>
       )}
 
 
-      {/* ── 1. Action Tabs Row (Home icon + Reservations finis + Reservations programmes) ── */}
+      {/* ── 1. Action Tabs Row (Home + Reservations finis + Reservations programmes) ── */}
       <div className="flex items-center gap-2.5 my-4 overflow-x-auto pb-1 scrollbar-none">
         {/* Home Button */}
         <button
           type="button"
           onClick={() => setActiveTab('main')}
-          className={`p-2.5 rounded-2xl transition-all flex items-center justify-center shrink-0 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 flex items-center cursor-pointer ${
             activeTab === 'main'
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'bg-white text-slate-400 hover:text-amber-500 border border-slate-200/80 hover:border-amber-300'
+              ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
           }`}
-          title={t.home.tabHome}
         >
-          <HomeIcon className="h-5 w-5 fill-current" />
+          <span>{t.home.tabHome}</span>
         </button>
 
         {/* Button: Reservations finis */}
@@ -244,7 +225,6 @@ export default function CustomerHomePage() {
               : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
           }`}
         >
-          <Clock className="h-3.5 w-3.5 opacity-80" />
           <span>{t.home.tabFinished}</span>
           {completedBookings.length > 0 && (
             <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
@@ -263,7 +243,6 @@ export default function CustomerHomePage() {
               : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
           }`}
         >
-          <Calendar className="h-3.5 w-3.5 opacity-80" />
           <span>{t.home.tabScheduled}</span>
           {scheduledBookings.length > 0 && (
             <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
@@ -282,7 +261,6 @@ export default function CustomerHomePage() {
               : 'bg-white text-slate-700 border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/50'
           }`}
         >
-          <Tag className="h-3.5 w-3.5 opacity-80" />
           <span>{t.home.ourOffers}</span>
           {announcements.length > 0 && (
             <span className="mx-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900 text-white font-bold">
@@ -295,8 +273,7 @@ export default function CustomerHomePage() {
       {/* ── Finished Reservations Tab Content ── */}
       {activeTab === 'finished' && (
         <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-start shadow-sm space-y-3">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <h3 className="text-sm font-bold text-slate-900">
             {t.home.finishedRidesTitle}
           </h3>
           {completedBookings.length > 0 ? (
@@ -329,8 +306,7 @@ export default function CustomerHomePage() {
       {activeTab === 'scheduled' && (
         <div className="mb-6 space-y-4 text-start">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-amber-500" />
+            <h3 className="text-sm font-bold text-slate-900">
               {t.home.scheduledRidesTitle}
             </h3>
             {scheduledBookings.length > 0 && (
@@ -381,17 +357,14 @@ export default function CustomerHomePage() {
 
                 {/* Details box */}
                 <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2 text-xs text-slate-700 text-start">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
+                  <div>
                     <span><strong>{t.home.pickup}:</strong> {b.pickupAddress || t.home.currentPosition}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-slate-900 shrink-0" />
+                  <div>
                     <span><strong>{t.home.destination}:</strong> {b.destinationAddress || b.dropoffAddress || t.home.notSpecified}</span>
                   </div>
                   {b.scheduledAt && (
-                    <div className="flex items-center gap-2 pt-1 border-t border-amber-200/40 text-amber-900 font-medium">
-                      <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                    <div className="pt-1 border-t border-amber-200/40 text-amber-900 font-medium">
                       <span><strong>{t.home.plannedOn}:</strong> {new Date(b.scheduledAt).toLocaleString(language === 'ar' ? 'ar-DZ' : 'fr-FR')}</span>
                     </div>
                   )}
@@ -404,9 +377,8 @@ export default function CustomerHomePage() {
                 {/* Pending CCP Notice & WhatsApp Contact Button */}
                 {b.status === 'PENDING' && (
                   <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 p-3.5 space-y-2.5 text-xs text-start">
-                    <div className="flex items-center gap-2 font-black text-amber-950">
-                      <Banknote className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>{language === 'ar' ? '⚠️ تحويل العربون عبر CCP مطلوب لتأكيد الرحلة' : '⚠️ Versement CCP requis pour confirmer'}</span>
+                    <div className="font-black text-amber-950">
+                      <span>{language === 'ar' ? 'تحويل العربون عبر CCP مطلوب لتأكيد الرحلة' : 'Versement CCP requis pour confirmer'}</span>
                     </div>
                     <p className="text-[11px] text-amber-900 leading-relaxed font-semibold">
                       {language === 'ar'
@@ -421,9 +393,8 @@ export default function CustomerHomePage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] text-white text-xs font-black hover:brightness-105 transition-all"
+                      className="w-full flex items-center justify-center py-2.5 px-3 rounded-xl bg-[#25D366] text-white text-xs font-black hover:brightness-105 transition-all"
                     >
-                      <MessageCircle className="w-4 h-4" />
                       <span>{language === 'ar' ? 'مراسلة السائق على واتساب لتحويل CCP' : 'Contacter sur WhatsApp (Versement CCP)'}</span>
                     </a>
                   </div>
@@ -444,9 +415,8 @@ export default function CustomerHomePage() {
                   <button
                     type="button"
                     onClick={() => setShowTrackingMap(true)}
-                    className="w-full bg-[#FF9900] hover:brightness-105 text-slate-950 py-3 rounded-2xl font-extrabold text-xs tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full bg-[#FF9900] hover:brightness-105 text-slate-950 py-3 rounded-2xl font-extrabold text-xs tracking-wider transition-all cursor-pointer flex items-center justify-center shadow-sm"
                   >
-                    <Car className="h-4 w-4" />
                     {t.home.showRide}
                   </button>
                 )}
@@ -454,7 +424,6 @@ export default function CustomerHomePage() {
             ))
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-2 shadow-sm">
-              <Calendar className="h-8 w-8 text-slate-300 mx-auto" />
               <p className="text-xs text-slate-500 font-medium">
                 {t.home.noScheduledRides}
               </p>
@@ -474,7 +443,6 @@ export default function CustomerHomePage() {
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                     {driver.driverName || driver.name || 'Zakaria Boukedjar'}
                   </h2>
-                  <ShieldCheck className="h-5 w-5 text-amber-500 inline shrink-0" />
                 </div>
                 <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -509,14 +477,12 @@ export default function CustomerHomePage() {
 
             {/* Vehicle & Plate Specs Pill */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-xs">
-                <Car className="w-3.5 h-3.5 text-[#FF9900]" />
+              <span className="inline-flex items-center bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-xs">
                 {driver.vehicleMake ? `${driver.vehicleMake} ` : ''}{driver.vehicleModel || 'Golf 7'}
                 {driver.vehicleColor ? ` • ${driver.vehicleColor}` : ''}
               </span>
               {driver.vehiclePlate && (
-                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-black bg-amber-100 text-amber-950 border border-amber-300/80 px-2.5 py-1 rounded-xl shadow-xs">
-                  <span className="text-[9px] bg-amber-400/80 px-1 py-0.5 rounded text-slate-950 font-sans font-extrabold">DZ</span>
+                <span className="inline-flex items-center font-mono text-[11px] font-black bg-amber-100 text-amber-950 border border-amber-300/80 px-2.5 py-1 rounded-xl shadow-xs">
                   {driver.vehiclePlate}
                 </span>
               )}
@@ -539,16 +505,15 @@ export default function CustomerHomePage() {
 
               <ul className="space-y-2.5 text-xs text-slate-700 font-medium px-1">
                 {serviceList.map((service, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0" />
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                     <span>{service}</span>
                   </li>
                 ))}
               </ul>
 
               <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-xs text-slate-700 italic space-y-1">
-                <p className="font-semibold text-amber-900 not-italic flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                <p className="font-semibold text-amber-900 not-italic">
                   {t.home.vipTitle}
                 </p>
                 <p>
@@ -595,10 +560,9 @@ export default function CustomerHomePage() {
             <button
               type="button"
               onClick={() => setIsBookingModalOpen(true)}
-              className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+              className="w-full sm:w-auto bg-[#FF9900] hover:bg-[#FF8800] text-slate-950 font-black text-base px-10 py-4 rounded-full shadow-lg shadow-[#FF9900]/30 hover:shadow-[#FF9900]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center cursor-pointer"
             >
               <span>{t.home.bookNow}</span>
-              <ArrowRight className={cn('h-4 w-4 text-slate-950 group-hover:translate-x-1 transition-transform', isRTL && 'rotate-180 group-hover:-translate-x-1')} />
             </button>
           </div>
         </>
@@ -613,7 +577,6 @@ export default function CustomerHomePage() {
             onClick={() => setActiveTab(activeTab === 'offers' ? 'main' : 'offers')}
             className="z-10 -mb-4 bg-white border-2 border-[#FF9900] text-slate-900 font-extrabold text-sm px-8 py-2.5 rounded-full shadow-md hover:bg-amber-50 transition-all flex items-center gap-2 cursor-pointer"
           >
-            <Tag className="h-4 w-4 text-[#FF9900]" />
             <span>{t.home.ourOffers}</span>
             {announcements.length > 0 && (
               <span className="bg-[#FF9900] text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">
@@ -648,10 +611,9 @@ export default function CustomerHomePage() {
                   <button
                     type="button"
                     onClick={() => setSelectedOffer(ann)}
-                    className="w-full bg-slate-900 hover:bg-black text-white rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full bg-slate-900 hover:bg-black text-white rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center cursor-pointer"
                   >
                     <span>{t.home.bookThisOffer}</span>
-                    <ArrowRight className={cn('h-3.5 w-3.5', isRTL && 'rotate-180')} />
                   </button>
                 </div>
               ))
@@ -682,15 +644,6 @@ export default function CustomerHomePage() {
               <X className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-5">
-              <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
-                <Car className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                {t.home.bookDriverModalTitle}
-              </h3>
-            </div>
-
             <CustomerBookingCard
               onBooked={() => {
                 setIsBookingModalOpen(false);
@@ -716,15 +669,6 @@ export default function CustomerHomePage() {
             >
               <X className="h-5 w-5" />
             </button>
-
-            <div className="flex items-center gap-2 mb-5">
-              <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
-                <Tag className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                {language === 'ar' ? 'حجز العرض' : "Réserver l'offre"}
-              </h3>
-            </div>
 
             <OfferBookingCard
               offer={selectedOffer}

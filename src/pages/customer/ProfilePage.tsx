@@ -7,15 +7,10 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useTranslation } from '@/store/languageStore';
 import {
   LogOut,
-  Phone,
-  Calendar,
   Edit2,
   Check,
   X,
-  Car,
   Loader2,
-  Key,
-  ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
@@ -188,7 +183,6 @@ export default function CustomerProfilePage() {
           <div
             className="flex items-center justify-center gap-1.5 text-[13px] mb-5 text-slate-500"
           >
-            <Phone className="h-3.5 w-3.5 text-[#FF9900]" />
             <span className="font-medium">+213 {profile?.phone}</span>
           </div>
 
@@ -201,8 +195,7 @@ export default function CustomerProfilePage() {
             <div
               className="py-3.5 px-3 rounded-2xl text-center border border-slate-100 bg-slate-50/50"
             >
-              <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <Car className="w-4 h-4 text-[#FF9900]" />
+              <div className="flex items-center justify-center mb-0.5">
                 <span
                   className="text-[15px] font-extrabold text-slate-900"
                 >
@@ -220,8 +213,7 @@ export default function CustomerProfilePage() {
             <div
               className="py-3.5 px-3 rounded-2xl text-center border border-slate-100 bg-slate-50/50"
             >
-              <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <Calendar className="w-4 h-4 text-[#FF9900]" />
+              <div className="flex items-center justify-center mb-0.5">
                 <span
                   className="text-[13px] font-extrabold text-slate-900"
                 >
@@ -239,13 +231,9 @@ export default function CustomerProfilePage() {
           {/* Change password row */}
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="w-full py-3.5 rounded-2xl flex items-center justify-between px-4 transition-colors cursor-pointer bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-100"
+            className="w-full py-3.5 rounded-2xl flex items-center justify-center px-4 transition-colors cursor-pointer bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-100"
           >
-            <div className="flex items-center gap-2.5">
-              <Key className="w-4 h-4 text-[#FF9900]" />
-              <span className="text-[13px] font-semibold">{t.profile.changePassword}</span>
-            </div>
-            <ChevronRight className={cn('w-4 h-4 text-slate-400', isRTL && 'rotate-180')} />
+            <span className="text-[13px] font-semibold">{t.profile.changePassword}</span>
           </button>
         </div>
 

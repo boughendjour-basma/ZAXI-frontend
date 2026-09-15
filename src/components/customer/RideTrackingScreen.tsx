@@ -8,9 +8,8 @@ import { useSocket } from '@/hooks/useSocket';
 import { joinBookingRoom, leaveBookingRoom } from '@/lib/socket';
 import type { Booking, DriverLocation } from '@/types/booking.types';
 import { useTranslation } from '@/store/languageStore';
-import { Phone, X, Clock, MapPin, Navigation, ChevronRight, Car, Home } from 'lucide-react';
+import { Phone, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn } from '@/utils/cn';
 
 // Fix Leaflet default icons in Vite
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -21,18 +20,18 @@ L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, 
 
 const driverIcon = L.divIcon({
   className: '',
-  html: `<div style="background:#FF9900;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(255,153,0,0.5);border:3px solid #fff;font-size:18px;">🚗</div>`,
-  iconSize: [40, 40], iconAnchor: [20, 20],
+  html: `<div style="background:#FF9900;border-radius:50%;width:32px;height:32px;box-shadow:0 4px 12px rgba(255,153,0,0.5);border:3px solid #fff;"></div>`,
+  iconSize: [32, 32], iconAnchor: [16, 16],
 });
 const pickupIcon = L.divIcon({
   className: '',
-  html: `<div style="background:#22C55E;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(34,197,94,0.4);border:3px solid #fff;font-size:16px;">📍</div>`,
-  iconSize: [36, 36], iconAnchor: [18, 18],
+  html: `<div style="background:#22C55E;border-radius:50%;width:28px;height:28px;box-shadow:0 4px 10px rgba(34,197,94,0.4);border:3px solid #fff;"></div>`,
+  iconSize: [28, 28], iconAnchor: [14, 14],
 });
 const destIcon = L.divIcon({
   className: '',
-  html: `<div style="background:#111;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,0.4);border:3px solid #fff;font-size:16px;">🏁</div>`,
-  iconSize: [36, 36], iconAnchor: [18, 18],
+  html: `<div style="background:#111;border-radius:50%;width:28px;height:28px;box-shadow:0 4px 10px rgba(0,0,0,0.4);border:3px solid #fff;"></div>`,
+  iconSize: [28, 28], iconAnchor: [14, 14],
 });
 
 function RecenterMap({ center }: { center: [number, number] }) {
@@ -239,7 +238,6 @@ export function RideTrackingScreen({
             }}
             title={t.tracking.backToHome}
           >
-            <Home style={{ width: 16, height: 16, color: '#FF9900' }} />
             <span>{t.nav.home}</span>
           </button>
         )}
@@ -289,7 +287,7 @@ export function RideTrackingScreen({
               zIndex: 30,
             }}
           >
-            ⚠️ {language === 'ar' ? 'جاري تحديث إشارة GPS للسائق...' : 'Signal GPS chauffeur en attente de mise à jour...'}
+            {language === 'ar' ? 'جاري تحديث إشارة GPS للسائق...' : 'Signal GPS chauffeur en attente de mise à jour...'}
           </div>
         )}
       </div>
@@ -315,14 +313,17 @@ export function RideTrackingScreen({
               width: 48,
               height: 48,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #FF9900, #E08514)',
+              background: '#111827',
+              color: '#fff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              fontSize: '18px',
+              fontWeight: 800,
               flexShrink: 0,
             }}
           >
-            <Car style={{ color: '#fff', width: 22, height: 22 }} />
+            {driverName ? driverName.charAt(0).toUpperCase() : 'Z'}
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontWeight: 800, fontSize: '16px', color: '#111' }}>{driverName}</p>
@@ -364,7 +365,7 @@ export function RideTrackingScreen({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <MapPin style={{ color: '#22C55E', width: 14, height: 14, marginTop: 2, flexShrink: 0 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', marginTop: 5, flexShrink: 0 }} />
             <div>
               <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.home.pickup}</p>
               <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#222' }}>
@@ -372,11 +373,9 @@ export function RideTrackingScreen({
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: 2 }}>
-            <ChevronRight className={cn('w-3 h-3 text-slate-300', isRTL && 'rotate-180')} />
-          </div>
+          <div style={{ width: 1, height: 10, background: '#E2E8F0', marginLeft: isRTL ? 'auto' : 3, marginRight: isRTL ? 3 : 'auto' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Navigation style={{ color: '#111', width: 14, height: 14, marginTop: 2, flexShrink: 0 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '2px', background: '#0F172A', marginTop: 5, flexShrink: 0 }} />
             <div>
               <p style={{ margin: 0, fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.home.destination}</p>
               <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#222' }}>
@@ -396,7 +395,6 @@ export function RideTrackingScreen({
           </div>
           {eta && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF8EC', borderRadius: '12px', padding: '8px 14px' }}>
-              <Clock style={{ color: '#FF9900', width: 14, height: 14 }} />
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#AA6600' }}>{eta}</span>
             </div>
           )}

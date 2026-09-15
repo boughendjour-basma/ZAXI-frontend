@@ -1,25 +1,18 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CustomerService } from '@/services/customer.service';
 import { BookingService } from '@/services/booking.service';
-import type { Booking } from '@/types/booking.types';
 import { useTranslation } from '@/store/languageStore';
 import {
-  Car,
-  Clock,
-  MapPin,
-  Navigation,
   Star,
   X,
-  ChevronRight,
-  AlertCircle,
   Loader2,
-  CheckCircle2,
-  XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
+
+type Booking = any;
 
 function formatLocalizedDate(dateStr: string, lang: string) {
   try {
@@ -97,19 +90,19 @@ export default function CustomerHistoryPage() {
       case 'COMPLETED':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-            <CheckCircle2 className="w-3.5 h-3.5" /> {t.history.statusCompleted}
+            {t.history.statusCompleted}
           </span>
         );
       case 'CANCELLED':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
-            <XCircle className="w-3.5 h-3.5" /> {t.history.statusCancelled}
+            {t.history.statusCancelled}
           </span>
         );
       case 'IN_PROGRESS':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-            ⚡ {t.history.statusInProgress}
+            {t.history.statusInProgress}
           </span>
         );
       case 'ACCEPTED':
@@ -117,7 +110,7 @@ export default function CustomerHistoryPage() {
       case 'ARRIVED':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
-            <Car className="w-3.5 h-3.5" /> {t.history.statusDriverArriving}
+            {t.history.statusDriverArriving}
           </span>
         );
       default:
@@ -199,7 +192,7 @@ export default function CustomerHistoryPage() {
       {/* Error state */}
       {isError && (
         <div className="p-5 rounded-3xl bg-rose-50 border border-rose-200 text-center space-y-2">
-          <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
+          
           <p className="text-xs text-rose-700 font-medium">
             {t.common.error}
           </p>
@@ -215,9 +208,7 @@ export default function CustomerHistoryPage() {
       {/* Empty state */}
       {!isLoading && !isError && filteredBookings.length === 0 && (
         <div className="py-14 px-6 text-center bg-white rounded-3xl border border-slate-200/80 space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto text-[#FF9900] border border-amber-200/60">
-            <Clock className="w-8 h-8" />
-          </div>
+          
           <div>
             <h3 className="text-base font-bold text-slate-900">
               {t.history.noRides}
@@ -257,13 +248,11 @@ export default function CustomerHistoryPage() {
               {/* Pickup & Dropoff */}
               <div className="space-y-2">
                 <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#FF9900] shrink-0 mt-0.5" />
                   <span className="text-xs font-bold text-slate-900 line-clamp-1">
                     {b.pickupAddress || `${b.pickupLat?.toFixed(4)}, ${b.pickupLng?.toFixed(4)}`}
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <Navigation className="w-4 h-4 text-slate-900 shrink-0 mt-0.5" />
                   <span className="text-xs font-semibold text-slate-700 line-clamp-1">
                     {b.dropoffAddress || b.destinationAddress || t.home.destination}
                   </span>
@@ -287,7 +276,7 @@ export default function CustomerHistoryPage() {
                       {t.history.rateRide}
                     </span>
                   ) : null}
-                  <ChevronRight className={cn('w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform', isRTL && 'rotate-180 group-hover:-translate-x-0.5')} />
+                  <span className={cn('text-slate-300 text-sm font-light select-none', isRTL && 'rotate-180 inline-block')}>›</span>
                 </div>
               </div>
             </div>
@@ -366,7 +355,6 @@ export default function CustomerHistoryPage() {
               </h4>
               <div className="space-y-2.5 text-xs">
                 <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#FF9900] shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[10px] text-slate-400 font-bold">{t.home.pickup}</div>
                     <div className="font-bold text-slate-900">
@@ -375,7 +363,6 @@ export default function CustomerHistoryPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <Navigation className="w-4 h-4 text-slate-900 shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[10px] text-slate-400 font-bold">{t.home.destination}</div>
                     <div className="font-bold text-slate-900">
@@ -390,7 +377,7 @@ export default function CustomerHistoryPage() {
             {selectedBooking.driver && (
               <div className="p-4 bg-amber-50/60 rounded-2xl space-y-2 text-xs border border-amber-200/60">
                 <div className="font-bold text-slate-900 text-sm border-b border-amber-200/60 pb-2 flex items-center gap-2">
-                  <Car className="w-4 h-4 text-[#FF9900]" /> {t.history.driverInfo}
+                  {t.history.driverInfo}
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-slate-600">{t.profile.fullName}</span>

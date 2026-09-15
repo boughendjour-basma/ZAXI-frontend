@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
-import { Eye, EyeOff, Lock, Phone } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
 import { useTranslation } from '@/store/languageStore';
 
@@ -131,11 +131,10 @@ export default function LoginPage() {
                 padding: '0 14px',
               }}
             >
-              <Phone style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder={t.auth.phonePlaceholder}
+                placeholder=""
                 disabled={loginMutation.isPending}
                 {...register('phone', {
                   onChange: (e) => {
@@ -173,10 +172,9 @@ export default function LoginPage() {
                 padding: '0 14px',
               }}
             >
-              <Lock style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder={t.auth.passwordPlaceholder}
+                placeholder=""
                 disabled={loginMutation.isPending}
                 {...register('password')}
                 style={{

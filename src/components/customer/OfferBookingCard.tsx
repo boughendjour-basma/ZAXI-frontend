@@ -6,19 +6,8 @@ import { DriverService } from '@/services/driver.service';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useTranslation } from '@/store/languageStore';
 import {
-  MapPin,
   Loader2,
-  AlertCircle,
-  LocateFixed,
   X,
-  Calendar,
-  Clock,
-  Tag,
-  Edit3,
-  CheckCircle2,
-  MessageCircle,
-  Info,
-  Banknote,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -282,12 +271,12 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
         {/* Success Header */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
           <div style={{
-            width: 58, height: 58, borderRadius: '50%',
+            width: 54, height: 54, borderRadius: '50%',
             background: '#ECFDF5', border: '2.5px solid #10B981',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#10B981',
+            color: '#10B981', fontSize: '22px', fontWeight: 900,
           }}>
-            <CheckCircle2 style={{ width: 34, height: 34 }} />
+            ✓
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: 0 }}>
             {language === 'ar' ? 'تم تسجيل طلب حجز العرض بنجاح !' : 'Demande d\'offre envoyée avec succès !'}
@@ -312,9 +301,6 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
           boxShadow: '0 4px 16px rgba(245, 158, 11, 0.15)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ background: '#F59E0B', borderRadius: '10px', padding: '6px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Banknote style={{ width: 18, height: 18 }} />
-            </div>
             <span style={{ fontWeight: 900, fontSize: '13px', color: '#92400E' }}>
               {language === 'ar' ? '⚠️ تنبيه هام : السائق لن يؤكد العرض قبل استلام CCP' : '⚠️ Important : Le chauffeur ne confirmera qu\'après versement CCP'}
             </span>
@@ -383,7 +369,6 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             textDecoration: 'none',
           }}
         >
-          <MessageCircle style={{ width: 20, height: 20 }} />
           <span>{language === 'ar' ? `مراسلة السائق على واتساب لتحويل CCP (${driverPhone})` : `Contacter sur WhatsApp pour versement CCP (${driverPhone})`}</span>
         </a>
 
@@ -410,8 +395,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
 
       {/* ── Offer Banner ── */}
       <div style={{ background: 'linear-gradient(135deg, #FF9900 0%, #FFB740 100%)', borderRadius: '20px', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '6px', boxShadow: '0 4px 20px rgba(255,153,0,0.25)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Tag style={{ color: '#fff', width: 16, height: 16, flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontWeight: 900, fontSize: '15px', color: '#fff', lineHeight: 1.3 }}>{offer.title}</span>
         </div>
         {(offer.description || offer.content) && (
@@ -444,10 +428,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
         gap: '10px',
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ background: '#F59E0B', borderRadius: '10px', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Banknote style={{ color: '#fff', width: 16, height: 16 }} />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontWeight: 900, fontSize: '13px', color: '#92400E' }}>
             {language === 'ar' ? '⚠️ تنبيه هام : السائق لن يؤكد العرض إلا بعد تحويل CCP' : '⚠️ Important : Le chauffeur ne confirmera qu\'après versement CCP'}
           </span>
@@ -491,15 +472,13 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
 
         {/* WhatsApp CTA */}
         <a href={waLink} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#25D366', color: '#fff', borderRadius: '14px', padding: '11px 16px', fontWeight: 800, fontSize: '12px', textDecoration: 'none' }}>
-          <MessageCircle style={{ width: 16, height: 16 }} />
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#25D366', color: '#fff', borderRadius: '14px', padding: '11px 16px', fontWeight: 800, fontSize: '12px', textDecoration: 'none' }}>
           {language === 'ar' ? `تواصل مع السائق عبر واتساب — ${driverPhone}` : `Contacter le chauffeur sur WhatsApp — ${driverPhone}`}
         </a>
       </div>
 
       {/* ── Info note ── */}
-      <div style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD', borderRadius: '14px', padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-        <Info style={{ color: '#0284C7', width: 15, height: 15, flexShrink: 0, marginTop: 1 }} />
+      <div style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD', borderRadius: '14px', padding: '10px 14px', display: 'flex', alignItems: 'flex-start' }}>
         <p style={{ fontSize: '11px', color: '#0369A1', margin: 0, fontWeight: 600, lineHeight: 1.5 }}>
           {language === 'ar'
             ? 'حدد مكان انطلاقك وتوقيت الرحلة. الوجهة والسعر محددان مسبقاً من العرض وشاملان لكل شيء.'
@@ -511,17 +490,16 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <label style={{ fontSize: '10px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            {language === 'ar' ? '📍 نقطة الانطلاق' : '📍 Lieu de départ'}
+            {language === 'ar' ? 'نقطة الانطلاق' : 'Lieu de départ'}
             <span style={{ color: '#EF4444', fontSize: '12px' }}>*</span>
           </label>
           <div style={{ display: 'flex', gap: '5px' }}>
             <button type="button" onClick={() => { setPickupMode('gps'); if (gpsStatus === 'idle' || gpsStatus === 'denied') detect(); }}
               style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'gps' ? '1.5px solid #22C55E' : '1.5px solid #E2E8F0', background: pickupMode === 'gps' ? '#F0FFF4' : '#F8FAFC', color: pickupMode === 'gps' ? '#16A34A' : '#64748B', transition: 'all 0.2s' }}>
-              <LocateFixed style={{ width: 10, height: 10, display: 'inline', marginRight: 3 }} />GPS
+              GPS
             </button>
             <button type="button" onClick={() => setPickupMode('manual')}
               style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'manual' ? '1.5px solid #FF9900' : '1.5px solid #E2E8F0', background: pickupMode === 'manual' ? '#FFF8EC' : '#F8FAFC', color: pickupMode === 'manual' ? '#D97706' : '#64748B', transition: 'all 0.2s' }}>
-              <Edit3 style={{ width: 10, height: 10, display: 'inline', marginRight: 3 }} />
               {language === 'ar' ? 'يدوي' : 'Manuel'}
             </button>
           </div>
@@ -537,22 +515,19 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
             )}
             {gpsStatus === 'success' && gpsLocation && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F0FFF4', border: '1.5px solid #86EFAC', borderRadius: '16px', padding: '12px 16px' }}>
-                <LocateFixed style={{ color: '#22C55E', width: 16, height: 16, flexShrink: 0 }} />
                 <input type="text" value={gpsLocation.address} onChange={(e) => setGpsAddress(e.target.value)} style={{ ...inputStyle, color: '#166534' }} />
-                <button onClick={() => { resetGps(); detect(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <LocateFixed style={{ color: '#22C55E', width: 14, height: 14 }} />
+                <button onClick={() => { resetGps(); detect(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '11px', fontWeight: 700, color: '#166534' }}>
+                  GPS
                 </button>
               </div>
             )}
             {(gpsStatus === 'denied' || gpsStatus === 'error') && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#FFF5F5', border: '1.5px solid #FCA5A5', borderRadius: '12px', padding: '8px 12px' }}>
-                <AlertCircle style={{ color: '#EF4444', width: 14, height: 14, flexShrink: 0 }} />
                 <span style={{ fontSize: '11px', color: '#DC2626', fontWeight: 500 }}>{language === 'ar' ? 'تعذّر تحديد الموقع. استخدم الإدخال اليدوي.' : 'GPS indisponible. Utilisez la saisie manuelle.'}</span>
               </div>
             )}
             {gpsStatus === 'idle' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8F8F8', border: '1.5px solid #E5E5E5', borderRadius: '16px', padding: '14px 16px' }}>
-                <LocateFixed style={{ color: '#ccc', width: 16, height: 16 }} />
                 <span style={{ fontSize: '13px', color: '#999' }}>{language === 'ar' ? 'جاري تحديد الموقع...' : 'Localisation...'}</span>
               </div>
             )}
@@ -562,9 +537,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
         {pickupMode === 'manual' && (
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: selectedPickup ? '#F0FFF4' : '#F8F8F8', border: `1.5px solid ${selectedPickup ? '#86EFAC' : '#E5E5E5'}`, borderRadius: '16px', padding: '14px 16px' }}>
-              {isLoadingPickup
-                ? <Loader2 style={{ color: '#999', width: 16, height: 16, flexShrink: 0 }} className="animate-spin" />
-                : <MapPin style={{ color: selectedPickup ? '#22C55E' : '#FF9900', width: 16, height: 16, flexShrink: 0 }} />}
+              {isLoadingPickup && <Loader2 style={{ color: '#999', width: 16, height: 16, flexShrink: 0 }} className="animate-spin" />}
               <input type="text" value={pickupInput}
                 onChange={(e) => { setPickupInput(e.target.value); const p = findPlace(e.target.value); if (p) setSelectedPickup(p); else if (selectedPickup) setSelectedPickup(null); }}
                 placeholder={language === 'ar' ? 'أدخل نقطة انطلاقك...' : 'Entrez votre lieu de départ...'}
@@ -576,7 +549,6 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
                 {pickupPredictions.map((pred, i) => (
                   <button key={pred.place_id} onClick={() => handleSelectPickup(pred)}
                     style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 16px', background: 'none', border: 'none', borderBottom: i < pickupPredictions.length - 1 ? '1px solid #F0F0F0' : 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
-                    <MapPin style={{ color: '#22C55E', width: 14, height: 14, flexShrink: 0, marginTop: 2 }} />
                     <span style={{ fontSize: '12px', color: '#222', fontWeight: 500, lineHeight: 1.4 }}>{pred.description}</span>
                   </button>
                 ))}
@@ -588,8 +560,7 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
 
       {/* ── DEPARTURE TIME ── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: scheduledDateTime ? '#FEFCE8' : '#F8FAFC', border: `1.5px ${scheduledDateTime ? 'solid' : 'dashed'} ${scheduledDateTime ? '#FDE047' : '#CBD5E1'}`, borderRadius: '18px', padding: '16px 18px', transition: 'all 0.3s' }}>
-        <label style={{ fontSize: '10px', fontWeight: 800, color: scheduledDateTime ? '#854D0E' : '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {scheduledDateTime ? <Clock style={{ width: 13, height: 13, color: '#CA8A04' }} /> : <Calendar style={{ width: 13, height: 13 }} />}
+        <label style={{ fontSize: '10px', fontWeight: 800, color: scheduledDateTime ? '#854D0E' : '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
           {language === 'ar' ? 'وقت الانطلاق' : 'Heure de départ'}
           <span style={{ color: '#EF4444', fontSize: '12px' }}>*</span>
         </label>

@@ -1,21 +1,11 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DriverService } from '@/services/driver.service';
 import { useDriverStore } from '@/store/driverStore';
 import {
-  LayoutDashboard,
-  Car,
-  History,
-  Users,
-  Megaphone,
-  DollarSign,
-  BarChart3,
-  ScrollText,
-  Settings,
   LogOut,
   Menu,
-  ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
@@ -29,7 +19,6 @@ import logoUrl from '@/assets/logo.png';
 interface NavItem {
   to: string;
   label: string;
-  icon: ReactNode;
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -38,15 +27,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { t, isRTL } = useTranslation();
 
   const navItems: NavItem[] = [
-    { to: '/driver/dashboard', label: t.nav.dashboard, icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: '/driver/today', label: t.nav.today, icon: <Car className="h-5 w-5" /> },
-    { to: '/driver/history', label: t.nav.history, icon: <History className="h-5 w-5" /> },
-    { to: '/driver/customers', label: t.nav.customers, icon: <Users className="h-5 w-5" /> },
-    { to: '/driver/pricing', label: t.nav.pricing, icon: <DollarSign className="h-5 w-5" /> },
-    { to: '/driver/announcements', label: t.nav.announcements, icon: <Megaphone className="h-5 w-5" /> },
-    { to: '/driver/statistics', label: t.nav.statistics, icon: <BarChart3 className="h-5 w-5" /> },
-    { to: '/driver/audit-logs', label: t.nav.auditLogs, icon: <ScrollText className="h-5 w-5" /> },
-    { to: '/driver/settings', label: t.nav.settings, icon: <Settings className="h-5 w-5" /> },
+    { to: '/driver/dashboard', label: t.nav.dashboard },
+    { to: '/driver/today', label: t.nav.today },
+    { to: '/driver/history', label: t.nav.history },
+    { to: '/driver/customers', label: t.nav.customers },
+    { to: '/driver/pricing', label: t.nav.pricing },
+    { to: '/driver/announcements', label: t.nav.announcements },
+    { to: '/driver/statistics', label: t.nav.statistics },
+    { to: '/driver/audit-logs', label: t.nav.auditLogs },
+    { to: '/driver/settings', label: t.nav.settings },
   ];
 
   return (
@@ -74,7 +63,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5" aria-label="Driver navigation">
-        {navItems.map(({ to, label, icon }) => (
+        {navItems.map(({ to, label }) => (
           <NavLink
             key={to}
             to={to}
@@ -82,20 +71,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 group',
+                'flex items-center px-4 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200',
                 isActive
                   ? 'bg-[#FF9900] text-black font-bold shadow-md'
                   : 'text-[#555] hover:bg-[#FFFBF0] hover:text-[#1A1A1A]',
               )
             }
           >
-            {({ isActive }) => (
-              <>
-                <span className={cn('shrink-0', !isActive && 'group-hover:scale-110 transition-transform')}>{icon}</span>
-                <span className="flex-1">{label}</span>
-                {isActive && <ChevronRight className={cn('h-4 w-4 opacity-60', isRTL && 'rotate-180')} />}
-              </>
-            )}
+            <span className="flex-1">{label}</span>
           </NavLink>
         ))}
       </nav>

@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, Clock, Bell, User, LogOut, Menu, ChevronRight } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
@@ -15,7 +15,6 @@ import logoUrl from '@/assets/logo.png';
 interface NavItem {
   to: string;
   label: string;
-  icon: ReactNode;
   end?: boolean;
   badge?: number;
 }
@@ -38,15 +37,14 @@ export function CustomerLayout() {
   const driverIsOnline: boolean = rawDriver?.isOnline === true;
 
   const navItems: NavItem[] = [
-    { to: '/', label: t.nav.home, icon: <Home className="h-5 w-5" />, end: true },
-    { to: '/history', label: t.nav.rides, icon: <Clock className="h-5 w-5" /> },
+    { to: '/', label: t.nav.home, end: true },
+    { to: '/history', label: t.nav.rides },
     {
       to: '/notifications',
       label: t.nav.notifications,
-      icon: <Bell className="h-5 w-5" />,
       badge: unreadCount > 0 ? unreadCount : undefined,
     },
-    { to: '/profile', label: t.nav.profile, icon: <User className="h-5 w-5" /> },
+    { to: '/profile', label: t.nav.profile },
   ];
 
   function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -78,7 +76,7 @@ export function CustomerLayout() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5" aria-label="Customer navigation">
-          {navItems.map(({ to, label, icon, end, badge }) => (
+          {navItems.map(({ to, label, end, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -86,25 +84,21 @@ export function CustomerLayout() {
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 group',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200',
                   isActive
                     ? 'bg-[#FF9900] text-black font-bold shadow-md'
                     : 'text-[#555] hover:bg-[#FFFBF0] hover:text-[#1A1A1A]',
                 )
               }
             >
-              {({ isActive }) => (
+              {() => (
                 <>
-                  <span className={cn('shrink-0 relative', !isActive && 'group-hover:scale-110 transition-transform')}>
-                    {icon}
-                    {badge !== undefined && (
-                      <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                        {badge > 9 ? '9+' : badge}
-                      </span>
-                    )}
-                  </span>
                   <span className="flex-1">{label}</span>
-                  {isActive && <ChevronRight className={cn('h-4 w-4 opacity-60', isRTL && 'rotate-180')} />}
+                  {badge !== undefined && (
+                    <span className="h-5 min-w-[20px] px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
                 </>
               )}
             </NavLink>
