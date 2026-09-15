@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { AuthService } from '@/services/auth.service';
+import { Phone } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
 import { useTranslation } from '@/store/languageStore';
 
@@ -107,6 +108,7 @@ export default function ForgotPasswordPage() {
           {/* Phone */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
+              <Phone style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
                 inputMode="numeric"
