@@ -417,7 +417,7 @@ export const translations: Record<Language, Translations> = {
       notSpecified: 'Non spécifiée',
       estimatedFare: 'Tarif estimé',
       cancelBooking: 'Annuler la réservation',
-      finishedRidesTitle: 'Réservations terminées',
+      finishedRidesTitle: 'Reservations finis',
       noFinishedRides: 'Aucune réservation terminée pour le moment.',
       scheduledRidesTitle: 'Réservations programmées',
       noScheduledRides: 'Aucune réservation programmée à venir.',

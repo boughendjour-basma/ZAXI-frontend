@@ -275,32 +275,44 @@ export default function CustomerHomePage() {
 
       {/* ── Finished Reservations Tab Content ── */}
       {activeTab === 'finished' && (
-        <div className="mb-6 bg-white rounded-3xl border border-slate-200/80 p-5 text-start shadow-sm space-y-3">
-          <h3 className="text-sm font-bold text-slate-900">
-            {t.home.finishedRidesTitle}
-          </h3>
+        <div className="mb-6 space-y-4 text-start">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-bold text-slate-900">
+              {t.home.finishedRidesTitle}
+            </h3>
+            {completedBookings.length > 0 && (
+              <span className="text-[11px] font-bold text-[#FF9900] bg-[#FFF8EC] border border-[#FFE0A0] px-2.5 py-0.5 rounded-full">
+                {completedBookings.length} {language === 'ar' ? 'حجز' : 'réservation(s)'}
+              </span>
+            )}
+          </div>
+
           {completedBookings.length > 0 ? (
-            completedBookings.map((b) => (
-              <div
-                key={b.id}
-                className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3 text-xs"
-              >
-                <div>
-                  <p className="font-bold text-slate-900">{b.destinationAddress || t.home.cityRide}</p>
-                  <p className="text-[#666] text-[11px] mt-0.5">{b.pickupAddress}</p>
+            <div className="space-y-3">
+              {completedBookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="p-4 rounded-3xl border border-slate-200/80 bg-white shadow-sm flex items-center justify-between gap-3 text-xs"
+                >
+                  <div>
+                    <p className="font-bold text-slate-900">{b.destinationAddress || t.home.cityRide}</p>
+                    <p className="text-[#666] text-[11px] mt-0.5">{b.pickupAddress}</p>
+                  </div>
+                  <div className="text-end shrink-0">
+                    <p className="font-extrabold text-[#FF9900]">{b.estimatedPrice} {t.home.currency}</p>
+                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      {t.common.completed}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-end shrink-0">
-                  <p className="font-extrabold text-amber-600">{b.estimatedPrice} {t.home.currency}</p>
-                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    {t.common.completed}
-                  </span>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <p className="text-xs text-slate-500 italic py-3 text-center">
-              {t.home.noFinishedRides}
-            </p>
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-2 shadow-sm">
+              <p className="text-xs text-slate-500 font-medium">
+                {t.home.noFinishedRides}
+              </p>
+            </div>
           )}
         </div>
       )}
@@ -313,7 +325,7 @@ export default function CustomerHomePage() {
               {t.home.scheduledRidesTitle}
             </h3>
             {scheduledBookings.length > 0 && (
-              <span className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-bold text-[#FF9900] bg-[#FFF8EC] border border-[#FFE0A0] px-2.5 py-0.5 rounded-full">
                 {scheduledBookings.length} {language === 'ar' ? 'حجز' : 'réservation(s)'}
               </span>
             )}
