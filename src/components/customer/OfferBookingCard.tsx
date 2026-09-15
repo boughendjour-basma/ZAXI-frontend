@@ -129,7 +129,7 @@ export function OfferBookingCard({ offer, onBooked }: OfferBookingCardProps) {
   });
   const rawDriver = driverProfileRes?.data?.data?.driver ?? (driverProfileRes?.data as any);
   const driverPhone: string =
-    rawDriver?.phoneNumber || rawDriver?.phone || '0555000000';
+    rawDriver?.phoneNumber || rawDriver?.phone || '+213795598182';
 
   /* ── Date/time ── */
   const [scheduledDateTime, setScheduledDateTime] = useState('');

@@ -35,11 +35,11 @@ export default function CustomerHomePage() {
   const driver = rawDriver ?? {
     driverName: 'Zakaria Boukedjar',
     vehicleMake: 'Volkswagen',
-    vehicleModel: 'Golf 7',
-    vehiclePlate: '029954-112-34',
-    vehicleColor: 'Gris',
-    phoneNumber: '0555123456',
-    whatsappNumber: '0555123456',
+    vehicleModel: 'Golf',
+    vehiclePlate: '00000000000',
+    vehicleColor: 'Blanc',
+    phoneNumber: '+213795598182',
+    whatsappNumber: '+213795598182',
     rating: 4.98,
     totalRides: 420,
     carPhotos: null,
@@ -159,7 +159,7 @@ export default function CustomerHomePage() {
         booking={activeBooking}
         driverName={driver.driverName ?? driver.name ?? 'Zakaria Boukedjar'}
         driverVehicle={driver.vehicleModel ?? 'Golf 7'}
-        driverPlate={driver.vehiclePlate ?? '029954-112-34'}
+        driverPlate={driver.vehiclePlate ?? '00000000000'}
         driverPhone={driver.phoneNumber ?? driver.phone ?? ''}
         onBackToHome={() => setShowTrackingMap(false)}
       />
@@ -397,11 +397,11 @@ export default function CustomerHomePage() {
                     </div>
                     <p className="text-[11px] text-slate-800 leading-relaxed font-semibold">
                       {language === 'ar'
-                        ? `طلبك مسجل بنجاح. يرجى العلم بأن السائق لن يؤكد الرحلة ولن يقبلها إلا بعد أن تتواصل معه عبر واتساب وتحول العربون إلى حسابه البريدي الجاري CCP (${driver.phoneNumber || '0555123456'}).`
-                        : `Votre demande est enregistrée. Le chauffeur ne confirmera PAS cette course tant que vous ne l'avez pas contacté sur WhatsApp pour lui verser l'acompte sur son compte CCP (${driver.phoneNumber || '0555123456'}).`}
+                        ? `طلبك مسجل بنجاح. يرجى العلم بأن السائق لن يؤكد الرحلة ولن يقبلها إلا بعد أن تتواصل معه عبر واتساب وتحول العربون إلى حسابه البريدي الجاري CCP (${driver.phoneNumber || '+213795598182'}).`
+                        : `Votre demande est enregistrée. Le chauffeur ne confirmera PAS cette course tant que vous ne l'avez pas contacté sur WhatsApp pour lui verser l'acompte sur son compte CCP (${driver.phoneNumber || '+213795598182'}).`}
                     </p>
                     <a
-                      href={`https://wa.me/${(driver.phoneNumber || '0555123456').replace(/\D/g, '')}?text=${encodeURIComponent(
+                      href={`https://wa.me/${(driver.phoneNumber || '+213795598182').replace(/\D/g, '')}?text=${encodeURIComponent(
                         language === 'ar'
                           ? `مرحباً كابتن زكريا، بخصوص طلبي المبرمج رقم #${b.id.slice(0, 8)} (${b.destinationAddress || ''}) بمبلغ ${b.estimatedPrice || ''} دج : أود إرسال العربون إلى حسابك البريدي CCP لتأكيد الرحلة. يرجى تزويدي برقم حسابك CCP.`
                           : `Bonjour Capitaine Zakaria, concernant ma réservation #${b.id.slice(0, 8)} (${b.destinationAddress || ''}) d'un montant de ${b.estimatedPrice || ''} DA : je souhaite effectuer le versement de l'acompte sur votre compte CCP pour confirmer la course. Merci de me communiquer votre numéro CCP.`

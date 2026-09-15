@@ -514,7 +514,7 @@ export function CustomerBookingCard({ onBooked }: CustomerBookingCardProps) {
   });
   const rawDriver = driverProfileRes?.data?.data?.driver ?? (driverProfileRes?.data as any);
   const driverPhone: string =
-    rawDriver?.whatsappNumber || rawDriver?.phoneNumber || rawDriver?.phone || '0555123456';
+    rawDriver?.whatsappNumber || rawDriver?.phoneNumber || rawDriver?.phone || '+213795598182';
 
   const { useSocketEvent } = useSocket();
 
