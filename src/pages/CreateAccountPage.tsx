@@ -147,9 +147,10 @@ export default function CreateAccountPage() {
             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
               <input
                 type="text"
-                placeholder=""
+                placeholder={language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
                 disabled={registerMutation.isPending}
                 {...register('name')}
+                className="placeholder:text-[#999] placeholder:text-gray-400"
                 style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500, textAlign: language === 'ar' ? 'right' : 'left' }}
               />
             </div>
