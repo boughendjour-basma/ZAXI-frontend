@@ -133,7 +133,7 @@ export function OfferBookingCard({ offer, onBooked }: OfferBookingCardProps) {
 
   /* ── Date/time ── */
   const [scheduledDateTime, setScheduledDateTime] = useState('');
-  const minDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+  const minDateTime = new Date(Date.now() + 2 * 60 * 1000 - new Date().getTimezoneOffset() * 60000)
     .toISOString().slice(0, 16);
 
   const [isOfferSubmitted, setIsOfferSubmitted] = useState(false);
@@ -210,22 +210,29 @@ export function OfferBookingCard({ offer, onBooked }: OfferBookingCardProps) {
     mutationFn: async () => {
       if (!scheduledDateTime)
         throw new Error(language === 'ar' ? 'يرجى اختيار وقت الانطلاق.' : "Veuillez choisir l'heure de départ.");
-      if (new Date(scheduledDateTime).getTime() <= Date.now() - 60000)
-        throw new Error(language === 'ar' ? 'يجب أن يكون وقت الانطلاق في المستقبل.' : 'La date de départ doit être dans le futur.');
+      if (new Date(scheduledDateTime).getTime() <= Date.now() + 30000)
+        throw new Error(language === 'ar' ? 'يجب أن يكون وقت الانطلاق في المستقبل (بعد دقيقة على الأقل).' : 'La date de départ doit être dans le futur (au moins 1 minute).');
       if (pickupMode === 'gps' && !gpsLocation)
         throw new Error(language === 'ar' ? 'يرجى تفعيل GPS أو الإدخال اليدوي.' : 'Veuillez activer le GPS ou saisir manuellement.');
       const pickup = getPickup();
-      const dest = offerDest ?? { lat: 36.073, lng: 4.761, address: offer.destinationAddress || offer.title };
+      const destAddress = offerDest?.address || offer.destinationLocation || offer.destinationAddress || offer.title || 'Bordj Bou Arréridj';
+      const dest = offerDest ?? {
+        lat: offer.destinationLat && !isNaN(offer.destinationLat) ? offer.destinationLat : 36.753,
+        lng: offer.destinationLng && !isNaN(offer.destinationLng) ? offer.destinationLng : 3.058,
+        address: destAddress,
+      };
       const pickupAddress = pickupMode === 'gps'
         ? gpsLocation?.address || pickup.address
         : selectedPickup?.address || pickupInput.trim() || pickup.address;
-      const notes = [`Offre: ${offer.title}`, `Prix offre: ${basePrice} DA (tout inclus)`].join(' | ');
+      const notes = [`Offre: ${offer.title}`, `Prix offre: ${basePrice > 0 ? basePrice + ' DA' : 'Sur devis'} (tout inclus)`].join(' | ');
       return BookingService.createBooking({
-        pickup: { latitude: pickup.lat, longitude: pickup.lng, address: pickupAddress },
-        destination: { latitude: dest.lat, longitude: dest.lng, address: dest.address },
+        pickup: { latitude: pickup.lat, longitude: pickup.lng, address: pickupAddress || 'Bordj Bou Arréridj' },
+        destination: { latitude: dest.lat, longitude: dest.lng, address: dest.address || destAddress },
         scheduledAt: new Date(scheduledDateTime).toISOString(),
-        offerPrice: basePrice,
-        ...(offer.id ? { announcementId: offer.id } : {}),
+        ...(basePrice > 0 ? { offerPrice: Math.round(basePrice) } : {}),
+        ...(offer.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offer.id)
+          ? { announcementId: offer.id }
+          : {}),
         notes,
       });
     },
@@ -234,7 +241,12 @@ export function OfferBookingCard({ offer, onBooked }: OfferBookingCardProps) {
       queryClient.invalidateQueries({ queryKey: ['myBookings'] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message || (language === 'ar' ? 'حدث خطأ.' : 'Erreur.'));
+      const serverErr = err.response?.data?.errors?.[0]?.message;
+      const generalMsg = err.response?.data?.message;
+      const displayMsg = serverErr
+        ? `${generalMsg ? generalMsg + ': ' : ''}${serverErr}`
+        : (generalMsg || err.message || (language === 'ar' ? 'حدث خطأ.' : 'Erreur.'));
+      toast.error(displayMsg);
     },
   });
 
@@ -516,101 +528,101 @@ Je souhaite effectuer le versement de l'acompte sur votre compte CCP afin de con
                 <span style={{ fontSize: '13px', color: '#FF9900', fontWeight: 600 }}>{language === 'ar' ? 'جاري تحديد موقعك...' : 'Localisation en cours...'}</span>
               </div>
             )}
-            {gpsStatus === 'success' && gpsLocation && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F0FFF4', border: '1.5px solid #86EFAC', borderRadius: '16px', padding: '12px 16px' }}>
-                <input type="text" value={gpsLocation.address} onChange={(e) => setGpsAddress(e.target.value)} style={{ ...inputStyle, color: '#166534' }} />
-                <button onClick={() => { resetGps(); detect(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '11px', fontWeight: 700, color: '#166534' }}>
-                  GPS
-                </button>
-              </div>
-            )}
-            {(gpsStatus === 'denied' || gpsStatus === 'error') && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#FFF5F5', border: '1.5px solid #FCA5A5', borderRadius: '12px', padding: '8px 12px' }}>
-                <span style={{ fontSize: '11px', color: '#DC2626', fontWeight: 500 }}>{language === 'ar' ? 'تعذّر تحديد الموقع. استخدم الإدخال اليدوي.' : 'GPS indisponible. Utilisez la saisie manuelle.'}</span>
-              </div>
-            )}
-            {gpsStatus === 'idle' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8F8F8', border: '1.5px solid #E5E5E5', borderRadius: '16px', padding: '14px 16px' }}>
-                <span style={{ fontSize: '13px', color: '#999' }}>{language === 'ar' ? 'جاري تحديد الموقع...' : 'Localisation...'}</span>
-              </div>
-            )}
-          </>
-        )}
-
-        {pickupMode === 'manual' && (
-          <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: selectedPickup ? '#F0FFF4' : '#F8F8F8', border: `1.5px solid ${selectedPickup ? '#86EFAC' : '#E5E5E5'}`, borderRadius: '16px', padding: '14px 16px' }}>
-              {isLoadingPickup && <Loader2 style={{ color: '#999', width: 16, height: 16, flexShrink: 0 }} className="animate-spin" />}
-              <input type="text" value={pickupInput}
-                onChange={(e) => { setPickupInput(e.target.value); const p = findPlace(e.target.value); if (p) setSelectedPickup(p); else if (selectedPickup) setSelectedPickup(null); }}
-                placeholder={language === 'ar' ? 'أدخل نقطة انطلاقك...' : 'Entrez votre lieu de départ...'}
-                style={inputStyle} autoFocus />
-              {pickupInput && <button onClick={() => { setPickupInput(''); setSelectedPickup(null); setPickupPredictions([]); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><X style={{ color: '#999', width: 14, height: 14 }} /></button>}
-            </div>
-            {pickupPredictions.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: '#fff', border: '1px solid #E5E5E5', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', marginTop: '6px', overflow: 'hidden' }}>
-                {pickupPredictions.map((pred, i) => (
-                  <button key={pred.place_id} onClick={() => handleSelectPickup(pred)}
-                    style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 16px', background: 'none', border: 'none', borderBottom: i < pickupPredictions.length - 1 ? '1px solid #F0F0F0' : 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
-                    <span style={{ fontSize: '12px', color: '#222', fontWeight: 500, lineHeight: 1.4 }}>{pred.description}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+        {gpsStatus === 'success' && gpsLocation && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F0FFF4', border: '1.5px solid #86EFAC', borderRadius: '16px', padding: '12px 16px' }}>
+            <input type="text" value={gpsLocation.address} onChange={(e) => setGpsAddress(e.target.value)} style={{ ...inputStyle, color: '#166534' }} />
+            <button onClick={() => { resetGps(); detect(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '11px', fontWeight: 700, color: '#166534' }}>
+              GPS
+            </button>
           </div>
         )}
-      </div>
-
-      {/* ── DEPARTURE TIME ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: scheduledDateTime ? '#FEFCE8' : '#F8FAFC', border: `1.5px ${scheduledDateTime ? 'solid' : 'dashed'} ${scheduledDateTime ? '#FDE047' : '#CBD5E1'}`, borderRadius: '18px', padding: '16px 18px', transition: 'all 0.3s' }}>
-        <label style={{ fontSize: '10px', fontWeight: 800, color: scheduledDateTime ? '#854D0E' : '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {language === 'ar' ? 'وقت الانطلاق' : 'Heure de départ'}
-          <span style={{ color: '#EF4444', fontSize: '12px' }}>*</span>
-        </label>
-        <input type="datetime-local" value={scheduledDateTime} min={minDateTime} onChange={(e) => setScheduledDateTime(e.target.value)}
-          style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: `1.5px solid ${scheduledDateTime ? '#FDE047' : '#CBD5E1'}`, fontSize: '13px', fontWeight: 700, color: scheduledDateTime ? '#713F12' : '#64748B', backgroundColor: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }} />
-        {!scheduledDateTime && (
-          <p style={{ fontSize: '10px', color: '#94A3B8', margin: 0, fontStyle: 'italic' }}>
-            {language === 'ar' ? 'اختر تاريخ ووقت الانطلاق.' : "Choisissez la date et l'heure de départ."}
-          </p>
+        {(gpsStatus === 'denied' || gpsStatus === 'error') && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#FFF5F5', border: '1.5px solid #FCA5A5', borderRadius: '12px', padding: '8px 12px' }}>
+            <span style={{ fontSize: '11px', color: '#DC2626', fontWeight: 500 }}>{language === 'ar' ? 'تعذّر تحديد الموقع. استخدم الإدخال اليدوي.' : 'GPS indisponible. Utilisez la saisie manuelle.'}</span>
+          </div>
         )}
-      </div>
-
-      {/* ── CONFIRM BUTTON ── */}
-      <button
-        type="button"
-        onClick={() => bookingMutation.mutate()}
-        disabled={bookingMutation.isPending || !scheduledDateTime}
-        style={{
-          width: '100%',
-          padding: '15px',
-          borderRadius: '999px',
-          border: 'none',
-          background: bookingMutation.isPending || !scheduledDateTime ? '#94A3B8' : '#0F172A',
-          color: '#fff',
-          fontSize: '14px',
-          fontWeight: 800,
-          cursor: bookingMutation.isPending || !scheduledDateTime ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          transition: 'all 0.2s',
-          letterSpacing: '0.2px',
-        }}
-      >
-        {bookingMutation.isPending ? (
-          <>
-            <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
-            {language === 'ar' ? 'جاري الحجز...' : 'Réservation en cours...'}
-          </>
-        ) : (
-          <span style={{ color: '#ffffff' }}>
-            {language === 'ar' ? 'تأكيد الحجز' : 'Confirmer la réservation'}
-          </span>
+        {gpsStatus === 'idle' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8F8F8', border: '1.5px solid #E5E5E5', borderRadius: '16px', padding: '14px 16px' }}>
+            <span style={{ fontSize: '13px', color: '#999' }}>{language === 'ar' ? 'جاري تحديد الموقع...' : 'Localisation...'}</span>
+          </div>
         )}
-      </button>
+      </>
+        )}
 
+      {pickupMode === 'manual' && (
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: selectedPickup ? '#F0FFF4' : '#F8F8F8', border: `1.5px solid ${selectedPickup ? '#86EFAC' : '#E5E5E5'}`, borderRadius: '16px', padding: '14px 16px' }}>
+            {isLoadingPickup && <Loader2 style={{ color: '#999', width: 16, height: 16, flexShrink: 0 }} className="animate-spin" />}
+            <input type="text" value={pickupInput}
+              onChange={(e) => { setPickupInput(e.target.value); const p = findPlace(e.target.value); if (p) setSelectedPickup(p); else if (selectedPickup) setSelectedPickup(null); }}
+              placeholder={language === 'ar' ? 'أدخل نقطة انطلاقك...' : 'Entrez votre lieu de départ...'}
+              style={inputStyle} autoFocus />
+            {pickupInput && <button onClick={() => { setPickupInput(''); setSelectedPickup(null); setPickupPredictions([]); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><X style={{ color: '#999', width: 14, height: 14 }} /></button>}
+          </div>
+          {pickupPredictions.length > 0 && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: '#fff', border: '1px solid #E5E5E5', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', marginTop: '6px', overflow: 'hidden' }}>
+              {pickupPredictions.map((pred, i) => (
+                <button key={pred.place_id} onClick={() => handleSelectPickup(pred)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 16px', background: 'none', border: 'none', borderBottom: i < pickupPredictions.length - 1 ? '1px solid #F0F0F0' : 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
+                  <span style={{ fontSize: '12px', color: '#222', fontWeight: 500, lineHeight: 1.4 }}>{pred.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
+
+      {/* ── DEPARTURE TIME ── */ }
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: scheduledDateTime ? '#FEFCE8' : '#F8FAFC', border: `1.5px ${scheduledDateTime ? 'solid' : 'dashed'} ${scheduledDateTime ? '#FDE047' : '#CBD5E1'}`, borderRadius: '18px', padding: '16px 18px', transition: 'all 0.3s' }}>
+    <label style={{ fontSize: '10px', fontWeight: 800, color: scheduledDateTime ? '#854D0E' : '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+      {language === 'ar' ? 'وقت الانطلاق' : 'Heure de départ'}
+      <span style={{ color: '#EF4444', fontSize: '12px' }}>*</span>
+    </label>
+    <input type="datetime-local" value={scheduledDateTime} min={minDateTime} onChange={(e) => setScheduledDateTime(e.target.value)}
+      style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: `1.5px solid ${scheduledDateTime ? '#FDE047' : '#CBD5E1'}`, fontSize: '13px', fontWeight: 700, color: scheduledDateTime ? '#713F12' : '#64748B', backgroundColor: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }} />
+    {!scheduledDateTime && (
+      <p style={{ fontSize: '10px', color: '#94A3B8', margin: 0, fontStyle: 'italic' }}>
+        {language === 'ar' ? 'اختر تاريخ ووقت الانطلاق.' : "Choisissez la date et l'heure de départ."}
+      </p>
+    )}
+  </div>
+
+  {/* ── CONFIRM BUTTON ── */ }
+  <button
+    type="button"
+    onClick={() => bookingMutation.mutate()}
+    disabled={bookingMutation.isPending || !scheduledDateTime}
+    style={{
+      width: '100%',
+      padding: '15px',
+      borderRadius: '999px',
+      border: 'none',
+      background: bookingMutation.isPending || !scheduledDateTime ? '#94A3B8' : '#0F172A',
+      color: '#fff',
+      fontSize: '14px',
+      fontWeight: 800,
+      cursor: bookingMutation.isPending || !scheduledDateTime ? 'not-allowed' : 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      transition: 'all 0.2s',
+      letterSpacing: '0.2px',
+    }}
+  >
+    {bookingMutation.isPending ? (
+      <>
+        <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+        {language === 'ar' ? 'جاري الحجز...' : 'Réservation en cours...'}
+      </>
+    ) : (
+      <span style={{ color: '#ffffff' }}>
+        {language === 'ar' ? 'تأكيد الحجز' : 'Confirmer la réservation'}
+      </span>
+    )}
+  </button>
+
+    </div >
   );
 }
