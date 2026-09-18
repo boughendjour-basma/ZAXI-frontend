@@ -425,7 +425,7 @@ export const translations: Record<Language, Translations> = {
       cityRide: 'Course en ville',
       scheduledRide: 'Course programmée',
       driverCertified: 'Chauffeur privé VTC certifié • Bordj Bou Arréridj',
-      mainCardTitle: 'Votre chauffeur privé à Bordj Bou Arréridj',
+      mainCardTitle: 'Votre chauffeur privé',
       mainCardSubtitle: 'Pour tous vos déplacements locaux et longues distances :',
       services: {
         city: 'courses en ville',

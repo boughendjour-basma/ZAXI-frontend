@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookingService } from '@/services/booking.service';
 import { FavoriteService } from '@/services/favorite.service';
 import { DriverService } from '@/services/driver.service';
-import { useGeolocation } from '@/hooks/useGeolocation';
 import { useTranslation } from '@/store/languageStore';
 import { useSocket } from '@/hooks/useSocket';
 import type { BookingEstimate } from '@/types/booking.types';
@@ -498,7 +497,6 @@ async function geocodeAddress(addressText: string): Promise<PlaceDetails | null>
 export function CustomerBookingCard({ onBooked }: CustomerBookingCardProps) {
   const queryClient = useQueryClient();
   const { t, language, isRTL } = useTranslation();
-  const { location: gpsLocation, status: gpsStatus, detect, setAddress: setGpsAddress, reset: resetGps } = useGeolocation();
 
   const [bookingMode, setBookingMode] = useState<'instant' | 'scheduled'>('instant');
   const [scheduledDateTime, setScheduledDateTime] = useState('');
@@ -547,8 +545,7 @@ export function CustomerBookingCard({ onBooked }: CustomerBookingCardProps) {
     ? (rawFavs as any).favorites
     : [];
 
-  // ── Pickup state ─────────────────────────────────────────────────────────────
-  const [pickupMode, setPickupMode] = useState<'gps' | 'manual'>('gps');
+  // ── Pickup state (Manual address search) ───────────────────────────────────
   const [pickupInput, setPickupInput] = useState('');
   const [pickupPredictions, setPickupPredictions] = useState<PlacePrediction[]>([]);
   const [selectedPickup, setSelectedPickup] = useState<PlaceDetails | null>(null);
@@ -596,7 +593,7 @@ export function CustomerBookingCard({ onBooked }: CustomerBookingCardProps) {
   const waMessage = language === 'ar'
     ? `مرحباً كابتن زكريا، أود تأكيد حجزي المبرمج في ZAXI :
 📅 الموعد: ${scheduledDateFormatted || 'غير محدد'}
-📍 نقطة الانطلاق: ${pickupMode === 'gps' ? (gpsLocation?.address || 'موقعي الحالي') : (selectedPickup?.address || pickupInput || 'غير محدد')}
+📍 نقطة الانطلاق: ${selectedPickup?.address || pickupInput || 'غير محدد'}
 🏁 الوجهة: ${selectedDest?.address || destInput || 'غير محدد'}
 ⏱ مدة الحجز: ${durationTextAr}
 🔄 رحلة العودة: ${withRetour ? `نعم، مع رحلة عودة (+${basePrice} دج)` : 'بدون رحلة عودة'}
@@ -604,7 +601,7 @@ export function CustomerBookingCard({ onBooked }: CustomerBookingCardProps) {
 أود تحويل مبلغ تسبيق (عربون) لتأكيد حجزي، يرجى تزويدي بمعلومات الدفع.`
     : `Bonjour Capitaine Zakaria, je souhaite confirmer ma réservation programmée sur ZAXI :
 📅 Date et heure : ${scheduledDateFormatted || 'Non précisée'}
-📍 Départ : ${pickupMode === 'gps' ? (gpsLocation?.address || 'Position actuelle') : (selectedPickup?.address || pickupInput || 'Non précisé')}
+📍 Départ : ${selectedPickup?.address || pickupInput || 'Non précisé'}
 🏁 Destination : ${selectedDest?.address || destInput || 'Non précisée'}
 ⏱ Durée avec chauffeur : ${durationTextFr}
 🔄 Trajet retour : ${withRetour ? `Oui, avec retour (+${basePrice} DA)` : 'Sans retour'}
@@ -613,27 +610,14 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
 
   const waLink = `https://wa.me/${driverPhone.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`;
 
-  // Trigger GPS on mount
-  useEffect(() => { detect(); }, [detect]);
-
-  // Auto-switch to manual mode ONLY if user explicitly denied GPS permission
-  useEffect(() => {
-    if (gpsStatus === 'denied') {
-      setPickupMode('manual');
-    }
-  }, [gpsStatus]);
-
   const getPickupCoords = useCallback(() => {
-    if (pickupMode === 'gps' && gpsLocation) {
-      return { lat: gpsLocation.lat, lng: gpsLocation.lng, address: gpsLocation.address };
-    }
     if (selectedPickup) return selectedPickup;
-    return { lat: 36.073, lng: 4.761, address: 'Bordj Bou Arréridj' };
-  }, [pickupMode, gpsLocation, selectedPickup]);
+    return { lat: 36.073, lng: 4.761, address: pickupInput.trim() || 'Bordj Bou Arréridj' };
+  }, [selectedPickup, pickupInput]);
 
-  // Pickup autocomplete (manual mode)
+  // Pickup autocomplete (manual entry)
   useEffect(() => {
-    if (pickupMode !== 'manual' || !pickupInput.trim() || pickupInput.trim().length < 2) {
+    if (!pickupInput.trim() || pickupInput.trim().length < 2) {
       setPickupPredictions([]);
       return;
     }
@@ -644,7 +628,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
       setPickupPredictions(results);
       setIsLoadingPickupPredictions(false);
     }, 350);
-  }, [pickupInput, pickupMode]);
+  }, [pickupInput]);
 
   const handleSelectPickup = useCallback(async (prediction: PlacePrediction) => {
     setPickupInput(prediction.description);
@@ -778,9 +762,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
   const createBookingMutation = useMutation({
     mutationFn: async () => {
       const pickup = getPickupCoords();
-      const pickupAddress = pickupMode === 'gps'
-        ? (gpsLocation?.address || pickup.address)
-        : (selectedPickup?.address || pickupInput.trim() || pickup.address);
+      const pickupAddress = selectedPickup?.address || pickupInput.trim() || pickup.address;
 
       let targetDest = selectedDest;
       if (!targetDest && destInput.trim()) targetDest = await geocodeAddress(destInput.trim());
@@ -830,11 +812,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
   });
 
   const handleConfirm = () => {
-    if (pickupMode === 'gps' && !gpsLocation) {
-      toast.error(language === 'ar' ? 'يرجى تفعيل GPS أو التبديل إلى الإدخال اليدوي.' : 'Veuillez activer votre GPS ou passer en saisie manuelle.');
-      return;
-    }
-    if (pickupMode === 'manual' && !selectedPickup && !pickupInput.trim()) {
+    if (!selectedPickup && !pickupInput.trim()) {
       toast.error(language === 'ar' ? 'يرجى إدخال نقطة الانطلاق.' : 'Veuillez entrer un lieu de départ.');
       return;
     }
@@ -1239,90 +1217,52 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
         </div>
       )}
 
-      {/* ── PICKUP SECTION ── */}
+      {/* ── PICKUP SECTION (Manual Search) ── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {/* Label + GPS/Manuel toggle */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <label style={{ fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {t.booking.pickupLabel}
           </label>
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button type="button" onClick={() => { setPickupMode('gps'); detect(); }}
-              style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'gps' ? '1.5px solid #22C55E' : '1.5px solid #E2E8F0', background: pickupMode === 'gps' ? '#F0FFF4' : '#F8FAFC', color: pickupMode === 'gps' ? '#16A34A' : '#64748B', transition: 'all 0.2s' }}>
-              GPS
-            </button>
-            <button type="button" onClick={() => setPickupMode('manual')}
-              style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'manual' ? '1.5px solid #FF9900' : '1.5px solid #E2E8F0', background: pickupMode === 'manual' ? '#FFF8EC' : '#F8FAFC', color: pickupMode === 'manual' ? '#FF9900' : '#64748B', transition: 'all 0.2s' }}>
-              {language === 'ar' ? 'يدوي' : 'Manuel'}
-            </button>
-          </div>
         </div>
 
-        {/* GPS mode display */}
-        {pickupMode === 'gps' && (
-          <>
-            {gpsStatus === 'detecting' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFF8EC', border: '1.5px solid #FFE0A0', borderRadius: '16px', padding: '14px 16px' }}>
-                <Loader2 style={{ color: '#FF9900', width: 16, height: 16 }} className="animate-spin" />
-                <span style={{ fontSize: '13px', color: '#FF9900', fontWeight: 600 }}>{t.booking.detectingGps}</span>
-              </div>
-            )}
-            {gpsStatus === 'success' && gpsLocation && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F0FFF4', border: '1.5px solid #86EFAC', borderRadius: '16px', padding: '12px 16px' }}>
-                <input type="text" value={gpsLocation.address} onChange={(e) => setGpsAddress(e.target.value)} style={{ ...inputStyle, color: '#166534' }} />
-                <button onClick={() => { resetGps(); detect(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '11px', fontWeight: 700, color: '#166534' }}>
-                  GPS
-                </button>
-              </div>
-            )}
-            {(gpsStatus === 'denied' || gpsStatus === 'error') && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: '#FFF5F5', border: '1.5px solid #FCA5A5', borderRadius: '12px', padding: '8px 12px' }}>
-                <span style={{ fontSize: '11px', color: '#DC2626', fontWeight: 500 }}>{t.booking.gpsFailed}</span>
-                <button
-                  type="button"
-                  onClick={() => { resetGps(); detect(); }}
-                  style={{ background: '#DC2626', color: '#fff', border: 'none', borderRadius: '8px', padding: '4px 10px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  {language === 'ar' ? 'إعادة المحاولة' : 'Réessayer'}
-                </button>
-              </div>
-            )}
-            {gpsStatus === 'idle' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8F8F8', border: '1.5px solid #E5E5E5', borderRadius: '16px', padding: '14px 16px' }}>
-                <span style={{ fontSize: '13px', color: '#999' }}>{t.booking.detectingGps}</span>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Manual mode */}
-        {pickupMode === 'manual' && (
-          <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: selectedPickup ? '#F0FFF4' : '#F8F8F8', border: `1.5px solid ${selectedPickup ? '#86EFAC' : '#E5E5E5'}`, borderRadius: '16px', padding: '14px 16px' }}>
-              {isLoadingPickupPredictions && <Loader2 style={{ color: '#999', width: 16, height: 16, flexShrink: 0 }} className="animate-spin" />}
-              <input type="text" value={pickupInput}
-                onChange={(e) => {
-                  setPickupInput(e.target.value);
-                  const p = findMatchingPlace(e.target.value);
-                  if (p) setSelectedPickup(p); else if (selectedPickup) setSelectedPickup(null);
-                }}
-                placeholder={language === 'ar' ? 'أدخل نقطة الانطلاق...' : 'Entrez votre lieu de départ...'}
-                style={inputStyle} autoFocus
-              />
-              {pickupInput && <button onClick={() => { setPickupInput(''); setSelectedPickup(null); setPickupPredictions([]); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><X style={{ color: '#999', width: 14, height: 14 }} /></button>}
-            </div>
-            {pickupPredictions.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: '#fff', border: '1px solid #E5E5E5', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', marginTop: '6px', overflow: 'hidden' }}>
-                {pickupPredictions.map((pred, i) => (
-                  <button key={pred.place_id} onClick={() => handleSelectPickup(pred)}
-                    style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 16px', background: 'none', border: 'none', borderBottom: i < pickupPredictions.length - 1 ? '1px solid #F0F0F0' : 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
-                    <span style={{ fontSize: '12px', color: '#222', fontWeight: 500, lineHeight: 1.4 }}>{pred.description}</span>
-                  </button>
-                ))}
-              </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: selectedPickup ? '#F0FFF4' : '#F8F8F8', border: `1.5px solid ${selectedPickup ? '#86EFAC' : '#E5E5E5'}`, borderRadius: '16px', padding: '14px 16px' }}>
+            {isLoadingPickupPredictions && <Loader2 style={{ color: '#999', width: 16, height: 16, flexShrink: 0 }} className="animate-spin" />}
+            <input
+              type="text"
+              value={pickupInput}
+              onChange={(e) => {
+                setPickupInput(e.target.value);
+                const p = findMatchingPlace(e.target.value);
+                if (p) setSelectedPickup(p); else if (selectedPickup) setSelectedPickup(null);
+              }}
+              placeholder={language === 'ar' ? 'أدخل نقطة الانطلاق (مثلاً: وسط المدينة، البرج)...' : 'Entrez votre lieu de départ (ex: Centre-ville, BBA)...'}
+              style={inputStyle}
+            />
+            {pickupInput && (
+              <button
+                type="button"
+                onClick={() => { setPickupInput(''); setSelectedPickup(null); setPickupPredictions([]); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <X style={{ color: '#999', width: 14, height: 14 }} />
+              </button>
             )}
           </div>
-        )}
+          {pickupPredictions.length > 0 && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: '#fff', border: '1px solid #E5E5E5', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', marginTop: '6px', overflow: 'hidden' }}>
+              {pickupPredictions.map((pred, i) => (
+                <button
+                  key={pred.place_id}
+                  onClick={() => handleSelectPickup(pred)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 16px', background: 'none', border: 'none', borderBottom: i < pickupPredictions.length - 1 ? '1px solid #F0F0F0' : 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}
+                >
+                  <span style={{ fontSize: '12px', color: '#222', fontWeight: 500, lineHeight: 1.4 }}>{pred.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── DESTINATION SECTION ── */}
@@ -1517,7 +1457,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
       {/* ── Confirm Button ── */}
       <button
         onClick={handleConfirm}
-        disabled={createBookingMutation.isPending || (pickupMode === 'gps' && gpsStatus === 'detecting') || isEstimating}
+        disabled={createBookingMutation.isPending || isEstimating}
         style={{ background: createBookingMutation.isPending ? '#ccc' : '#111', color: '#fff', border: 'none', borderRadius: '30px', padding: '16px', fontSize: '14px', fontWeight: 700, cursor: createBookingMutation.isPending ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}
       >
         {createBookingMutation.isPending ? (<><Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />{t.common.loading}</>) : t.booking.confirmBooking}

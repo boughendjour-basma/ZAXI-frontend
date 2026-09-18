@@ -148,7 +148,7 @@ export default function CreateAccountPage() {
               <User style={{ width: 18, height: 18, color: '#999', flexShrink: 0, marginRight: language === 'ar' ? 0 : 8, marginLeft: language === 'ar' ? 8 : 0 }} />
               <input
                 type="text"
-                placeholder={language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                placeholder={language === 'ar' ? 'الاسم الكامل' : 'Nom complet'}
                 disabled={registerMutation.isPending}
                 {...register('name')}
                 style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500, textAlign: language === 'ar' ? 'right' : 'left' }}
@@ -168,7 +168,7 @@ export default function CreateAccountPage() {
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder={language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                placeholder={language === 'ar' ? 'رقم الهاتف' : 'Numéro de téléphone'}
                 disabled={registerMutation.isPending}
                 {...register('phone', {
                   onChange: (e) => { e.target.value = e.target.value.replace(/\s+/g, ''); },
@@ -206,7 +206,7 @@ export default function CreateAccountPage() {
             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', borderRadius: '14px', padding: '0 14px' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder={language === 'ar' ? 'كلمة المرور' : 'Password'}
+                placeholder={language === 'ar' ? 'كلمة المرور' : 'Mot de passe'}
                 disabled={registerMutation.isPending}
                 {...register('password')}
                 style={{ width: '100%', backgroundColor: 'transparent', color: '#333', padding: '14px 0', border: 'none', outline: 'none', fontSize: '13px', fontWeight: 500 }}
