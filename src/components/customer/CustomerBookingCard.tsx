@@ -616,9 +616,9 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
   // Trigger GPS on mount
   useEffect(() => { detect(); }, [detect]);
 
-  // Auto-switch to manual mode if GPS denied/error
+  // Auto-switch to manual mode ONLY if user explicitly denied GPS permission
   useEffect(() => {
-    if (gpsStatus === 'denied' || gpsStatus === 'error') {
+    if (gpsStatus === 'denied') {
       setPickupMode('manual');
     }
   }, [gpsStatus]);
@@ -1247,7 +1247,7 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
             {t.booking.pickupLabel}
           </label>
           <div style={{ display: 'flex', gap: '5px' }}>
-            <button type="button" onClick={() => { setPickupMode('gps'); if (gpsStatus === 'idle' || gpsStatus === 'denied') detect(); }}
+            <button type="button" onClick={() => { setPickupMode('gps'); detect(); }}
               style={{ padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', border: pickupMode === 'gps' ? '1.5px solid #22C55E' : '1.5px solid #E2E8F0', background: pickupMode === 'gps' ? '#F0FFF4' : '#F8FAFC', color: pickupMode === 'gps' ? '#16A34A' : '#64748B', transition: 'all 0.2s' }}>
               GPS
             </button>
@@ -1276,8 +1276,15 @@ Je souhaite vous verser un acompte pour valider définitivement la réservation.
               </div>
             )}
             {(gpsStatus === 'denied' || gpsStatus === 'error') && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#FFF5F5', border: '1.5px solid #FCA5A5', borderRadius: '12px', padding: '8px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: '#FFF5F5', border: '1.5px solid #FCA5A5', borderRadius: '12px', padding: '8px 12px' }}>
                 <span style={{ fontSize: '11px', color: '#DC2626', fontWeight: 500 }}>{t.booking.gpsFailed}</span>
+                <button
+                  type="button"
+                  onClick={() => { resetGps(); detect(); }}
+                  style={{ background: '#DC2626', color: '#fff', border: 'none', borderRadius: '8px', padding: '4px 10px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {language === 'ar' ? 'إعادة المحاولة' : 'Réessayer'}
+                </button>
               </div>
             )}
             {gpsStatus === 'idle' && (

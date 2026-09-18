@@ -131,6 +131,7 @@ export default function DriverDashboardPage() {
 
   const { startTracking, stopTracking } = useDriverLocation({
     hasActiveRide: rideState !== 'waiting',
+    activeBookingId: activeBooking?.id,
   });
 
   useEffect(() => {

@@ -105,9 +105,18 @@ export function useDriverLocation(options?: UseDriverLocationOptions): UseDriver
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => handlePositionRef.current(pos),
       (err) => {
-        console.warn('[useDriverLocation] Error:', err.message);
-        setError(err.message);
-        setIsTracking(false);
+        console.warn('[useDriverLocation] Geolocation warning:', err.code, err.message);
+        if (err.code === err.PERMISSION_DENIED) {
+          setError('Permission de géolocalisation refusée.');
+          if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+          }
+          setIsTracking(false);
+        } else {
+          // Temporary timeout or weak GPS signal: do not terminate watchPosition
+          setError(null);
+        }
       },
       {
         enableHighAccuracy: true,

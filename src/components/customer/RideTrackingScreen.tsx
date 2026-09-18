@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { BookingService } from '@/services/booking.service';
@@ -36,8 +36,91 @@ const destIcon = L.divIcon({
 
 function RecenterMap({ center }: { center: [number, number] }) {
   const map = useMap();
-  useEffect(() => { map.setView(center, map.getZoom()); }, [center[0], center[1]]);
+  useEffect(() => {
+    if (
+      Array.isArray(center) &&
+      typeof center[0] === 'number' &&
+      typeof center[1] === 'number' &&
+      !isNaN(center[0]) &&
+      !isNaN(center[1])
+    ) {
+      map.setView(center, map.getZoom());
+    }
+  }, [center[0], center[1], map]);
   return null;
+}
+
+// ─── OSRM route fetcher ───────────────────────────────────────────────────────
+async function fetchOsrmRoute(
+  from: [number, number],
+  to: [number, number],
+): Promise<[number, number][]> {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('OSRM error');
+    const json = await res.json();
+    if (json.code === 'Ok' && json.routes?.[0]?.geometry?.coordinates) {
+      return json.routes[0].geometry.coordinates.map(([lng, lat]: number[]) => [lat, lng]);
+    }
+  } catch {
+    // Fall back to straight line
+  }
+  return [from, to];
+}
+
+function OsrmRouteLayer({
+  from,
+  to,
+  color = '#FF9900',
+}: {
+  from: [number, number];
+  to: [number, number];
+  color?: string;
+}) {
+  const map = useMap();
+  const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (
+      !from || !to ||
+      typeof from[0] !== 'number' || typeof from[1] !== 'number' ||
+      typeof to[0] !== 'number' || typeof to[1] !== 'number' ||
+      isNaN(from[0]) || isNaN(from[1]) ||
+      isNaN(to[0]) || isNaN(to[1])
+    ) {
+      return;
+    }
+
+    fetchOsrmRoute(from, to).then((coords) => {
+      if (cancelled) return;
+      setRouteCoords(coords);
+      if (coords.length > 1) {
+        try {
+          const bounds = L.latLngBounds(coords.map((c) => L.latLng(c[0], c[1])));
+          if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+          }
+        } catch {
+          // ignore fitBounds error if unmounted
+        }
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [from[0], from[1], to[0], to[1], map]);
+
+  if (routeCoords.length < 2) return null;
+
+  return (
+    <Polyline
+      positions={routeCoords}
+      pathOptions={{ color, weight: 5, opacity: 0.85, lineJoin: 'round' }}
+    />
+  );
 }
 
 interface RideTrackingScreenProps {
@@ -81,10 +164,15 @@ export function RideTrackingScreen({
   const [eta, setEta] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
-  const pickupLat = booking.pickupLat ?? booking.pickupLatitude ?? 36.073;
-  const pickupLng = booking.pickupLng ?? booking.pickupLongitude ?? 4.761;
-  const dropoffLat = booking.dropoffLat ?? booking.destinationLatitude ?? 36.073;
-  const dropoffLng = booking.dropoffLng ?? booking.destinationLongitude ?? 4.761;
+  const numOr = (val: any, fallback: number): number => {
+    const n = typeof val === 'number' ? val : parseFloat(val);
+    return isNaN(n) ? fallback : n;
+  };
+
+  const pickupLat = numOr(booking.pickupLat ?? booking.pickupLatitude, 36.073);
+  const pickupLng = numOr(booking.pickupLng ?? booking.pickupLongitude, 4.761);
+  const dropoffLat = numOr(booking.dropoffLat ?? booking.destinationLatitude, 36.073);
+  const dropoffLng = numOr(booking.dropoffLng ?? booking.destinationLongitude, 4.761);
 
   const pickupPos = { lat: pickupLat, lng: pickupLng };
   const destPos = { lat: dropoffLat, lng: dropoffLng };
@@ -104,8 +192,15 @@ export function RideTrackingScreen({
   useEffect(() => {
     BookingService.getDriverLocation(booking.id)
       .then((res) => {
-        const loc = res.data?.data;
-        if (loc) {
+        const raw = res.data?.data;
+        const loc = (raw as any)?.location ?? raw;
+        if (
+          loc &&
+          typeof loc.latitude === 'number' &&
+          typeof loc.longitude === 'number' &&
+          !isNaN(loc.latitude) &&
+          !isNaN(loc.longitude)
+        ) {
           setDriverPos({ lat: loc.latitude, lng: loc.longitude });
           setLastUpdateTimestamp(Date.now());
           setIsStale(false);
@@ -121,8 +216,15 @@ export function RideTrackingScreen({
         setIsStale(true);
         BookingService.getDriverLocation(booking.id)
           .then((res) => {
-            const loc = res.data?.data;
-            if (loc) {
+            const raw = res.data?.data;
+            const loc = (raw as any)?.location ?? raw;
+            if (
+              loc &&
+              typeof loc.latitude === 'number' &&
+              typeof loc.longitude === 'number' &&
+              !isNaN(loc.latitude) &&
+              !isNaN(loc.longitude)
+            ) {
               setDriverPos({ lat: loc.latitude, lng: loc.longitude });
               setLastUpdateTimestamp(Date.now());
               setIsStale(false);
@@ -137,27 +239,34 @@ export function RideTrackingScreen({
   // Real-time driver location updates via socket
   useSocketEvent('driver:location:update', useCallback((data: DriverLocation) => {
     if (data.bookingId !== booking.id) return;
-    setDriverPos({ lat: data.latitude, lng: data.longitude });
-    setLastUpdateTimestamp(Date.now());
-    setIsStale(false);
+    if (
+      typeof data.latitude === 'number' &&
+      typeof data.longitude === 'number' &&
+      !isNaN(data.latitude) &&
+      !isNaN(data.longitude)
+    ) {
+      setDriverPos({ lat: data.latitude, lng: data.longitude });
+      setLastUpdateTimestamp(Date.now());
+      setIsStale(false);
 
-    // Rough ETA from driver to pickup (if still ACCEPTED)
-    if (booking.status === 'ACCEPTED' && driverPos) {
-      const R = 6371;
-      const dLat = ((data.latitude - pickupLat) * Math.PI) / 180;
-      const dLng = ((data.longitude - pickupLng) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos((pickupLat * Math.PI) / 180) *
-          Math.cos((data.latitude * Math.PI) / 180) *
-          Math.sin(dLng / 2) ** 2;
-      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const minutes = Math.max(1, Math.round((dist / 30) * 60));
-      setEta(`~${minutes} ${t.common.minutes}`);
-    } else {
-      setEta(null);
+      // Rough ETA from driver to pickup (if still ACCEPTED)
+      if (booking.status === 'ACCEPTED') {
+        const R = 6371;
+        const dLat = ((data.latitude - pickupLat) * Math.PI) / 180;
+        const dLng = ((data.longitude - pickupLng) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos((pickupLat * Math.PI) / 180) *
+            Math.cos((data.latitude * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const minutes = Math.max(1, Math.round((dist / 30) * 60));
+        setEta(`~${minutes} ${t.common.minutes}`);
+      } else {
+        setEta(null);
+      }
     }
-  }, [booking.id, booking.status, pickupLat, pickupLng, driverPos, t.common.minutes]));
+  }, [booking.id, booking.status, pickupLat, pickupLng, t.common.minutes]));
 
   // Cancel booking
   const cancelMutation = useMutation({
@@ -172,7 +281,9 @@ export function RideTrackingScreen({
   });
 
   const canCancel = booking.status === 'PENDING' || booking.status === 'ACCEPTED';
-  const mapCenter = driverPos ?? pickupPos;
+  const mapCenter: [number, number] = driverPos && !isNaN(driverPos.lat) && !isNaN(driverPos.lng)
+    ? [driverPos.lat, driverPos.lng]
+    : [pickupPos.lat, pickupPos.lng];
 
   return (
     <div
@@ -190,7 +301,7 @@ export function RideTrackingScreen({
       {/* ── Map Area ── */}
       <div style={{ flex: 1, position: 'relative' }}>
         <MapContainer
-          center={mapCenter as unknown as [number, number]}
+          center={mapCenter}
           zoom={15}
           style={{ width: '100%', height: '100%' }}
           zoomControl={false}
@@ -200,10 +311,10 @@ export function RideTrackingScreen({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          <RecenterMap center={mapCenter as unknown as [number, number]} />
+          <RecenterMap center={mapCenter} />
 
           {/* Driver marker */}
-          {driverPos && (
+          {driverPos && !isNaN(driverPos.lat) && !isNaN(driverPos.lng) && (
             <Marker position={[driverPos.lat, driverPos.lng]} icon={driverIcon} title={driverName} />
           )}
 
@@ -212,6 +323,24 @@ export function RideTrackingScreen({
 
           {/* Destination marker */}
           <Marker position={[destPos.lat, destPos.lng]} icon={destIcon} title={t.home.destination} />
+
+          {/* OSRM Route: Driver to Pickup when ACCEPTED */}
+          {booking.status === 'ACCEPTED' && driverPos && !isNaN(driverPos.lat) && !isNaN(driverPos.lng) && (
+            <OsrmRouteLayer
+              from={[driverPos.lat, driverPos.lng]}
+              to={[pickupPos.lat, pickupPos.lng]}
+              color="#3B82F6"
+            />
+          )}
+
+          {/* OSRM Route: Pickup to Destination when IN_PROGRESS or driver not yet located */}
+          {(booking.status === 'IN_PROGRESS' || !driverPos) && (
+            <OsrmRouteLayer
+              from={[pickupPos.lat, pickupPos.lng]}
+              to={[destPos.lat, destPos.lng]}
+              color="#FF9900"
+            />
+          )}
         </MapContainer>
 
         {/* Back to Home Button */}
