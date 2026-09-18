@@ -159,6 +159,11 @@ export default function DriverDashboardPage() {
 
   const pendingBookings = pendingBookingsRes ?? [];
 
+  // Match pending booking from query cache if socket data is waiting on relations
+  const matchingDbBooking = pendingBookings.find(
+    (b) => b.id === (incomingBooking?.bookingId || pendingBookings[0]?.id)
+  );
+
   // Active pending request to show to the driver: either from socket or from database
   const displayPendingBooking = incomingBooking
     ? {
@@ -172,7 +177,11 @@ export default function DriverDashboardPage() {
         estimatedPrice: incomingBooking.estimatedPrice,
         distanceKm: incomingBooking.distanceKm,
         durationMinutes: incomingBooking.durationMinutes,
-        customer: incomingBooking.customer,
+        customer: incomingBooking.customer?.phone
+          ? incomingBooking.customer
+          : matchingDbBooking?.customer?.phone
+          ? matchingDbBooking.customer
+          : incomingBooking.customer ?? matchingDbBooking?.customer ?? null,
       }
     : (!activeBooking && pendingBookings.length > 0)
     ? {
@@ -196,9 +205,10 @@ export default function DriverDashboardPage() {
       (data: SocketEvents['booking:new']) => {
         if (!isOnline) return;
         setIncomingBooking(data);
+        queryClient.invalidateQueries({ queryKey: ['driverPendingBookings'] });
         toast(language === 'ar' ? '🚗 طلب رحلة جديد !' : '🚗 Nouvelle demande de course !', { duration: 8000 });
       },
-      [isOnline, language],
+      [isOnline, language, queryClient],
     ),
   );
 
@@ -369,33 +379,31 @@ export default function DriverDashboardPage() {
             </div>
 
             {/* Customer Info & Direct Call Button */}
-            {displayPendingBooking.customer && (
-              <div className="flex items-center justify-between bg-black/10 rounded-2xl p-2.5 px-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                    <User className="w-4 h-4 text-[#FF9900]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-950 truncate">
-                      {displayPendingBooking.customer.name || (language === 'ar' ? 'الزبون' : 'Client')}
-                    </p>
-                    <p className="text-[11px] font-bold text-slate-900 font-mono">
-                      {displayPendingBooking.customer.phone || (language === 'ar' ? 'رقم الهاتف غير متوفر' : 'N° non renseigné')}
-                    </p>
-                  </div>
+            <div className="flex items-center justify-between bg-black/10 rounded-2xl p-2.5 px-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  <User className="w-4 h-4 text-[#FF9900]" />
                 </div>
-
-                {displayPendingBooking.customer.phone && (
-                  <a
-                    href={`tel:${displayPendingBooking.customer.phone}`}
-                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-950 hover:bg-black text-white text-xs font-black shadow transition-all active:scale-95 shrink-0"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-[#22C55E]" />
-                    <span>{language === 'ar' ? 'اتصال' : 'Appeler'}</span>
-                  </a>
-                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-950 truncate">
+                    {displayPendingBooking.customer?.name || (language === 'ar' ? 'الزبون' : 'Client')}
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-900 font-mono">
+                    {displayPendingBooking.customer?.phone || (language === 'ar' ? 'رقم الهاتف غير متوفر' : 'N° non renseigné')}
+                  </p>
+                </div>
               </div>
-            )}
+
+              {displayPendingBooking.customer?.phone && (
+                <a
+                  href={`tel:${displayPendingBooking.customer.phone}`}
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-950 hover:bg-black text-white text-xs font-black shadow transition-all active:scale-95 shrink-0"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#22C55E]" />
+                  <span>{language === 'ar' ? 'اتصال' : 'Appeler'}</span>
+                </a>
+              )}
+            </div>
 
             {/* Google Maps directions button */}
             <a
